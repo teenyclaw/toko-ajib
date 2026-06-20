@@ -68,12 +68,15 @@ function beep() {
     }
 }
 
+function cartEntries(cart) {
+    return Object.entries(cart).sort((a, b) => (a[1].order ?? 0) - (b[1].order ?? 0));
+}
+
 function renderCart(cart, grandTotal) {
     let tbody = document.querySelector('#cart-table tbody');
     tbody.innerHTML = '';
 
-    for (let id in cart) {
-        let item = cart[id];
+    for (const [id, item] of cartEntries(cart)) {
 
         let row = `
             <tr>

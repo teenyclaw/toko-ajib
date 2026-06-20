@@ -6,6 +6,7 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Product;
 use App\Models\Debt;
+use App\Support\CartOrder;
 
 class CartController extends Controller
 {
@@ -27,7 +28,7 @@ class CartController extends Controller
 
     public function checkoutAjax(Request $request)
     {
-        $cart = session()->get('cart', []);
+        $cart = CartOrder::ensure(session()->get('cart', []));
         if (empty($cart)) {
             return response()->json(['status'=>'error','message'=>'Keranjang kosong']);
         }
@@ -113,13 +114,24 @@ class CartController extends Controller
         return response()->json($this->calculateCart($cart));
     }
 
+    public function cartData()
+    {
+        $cart = session()->get('cart', []);
+
+        return response()->json($this->calculateCart($cart));
+    }
+
     private function calculateCart($cart)
     {
+        $cart = CartOrder::ensure($cart);
+        session()->put('cart', $cart);
+
         $grandTotal = 0;
         foreach ($cart as $id => $item) {
             $cart[$id]['total'] = $item['price'] * $item['qty'];
             $grandTotal += $cart[$id]['total'];
         }
+
         return ['cart' => $cart, 'grandTotal' => $grandTotal];
     }
 
@@ -135,6 +147,7 @@ class CartController extends Controller
                 'name'      => $product->name,
                 'price'     => (int)$price,
                 'qty'       => 1,
+                'order'     => CartOrder::next($cart),
                 'harga_pcs' => $product->harga_jual_pcs,
                 'harga_dus' => $product->harga_jual_dus ?? $product->harga_jual_pcs,
             ];
@@ -153,7 +166,9 @@ class CartController extends Controller
 
     public function index()
     {
-        $cart = session()->get('cart', []);
+        $cart = CartOrder::ensure(session()->get('cart', []));
+        session()->put('cart', $cart);
+
         return view('cart.index', compact('cart'));
     }
 

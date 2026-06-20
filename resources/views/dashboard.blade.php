@@ -500,6 +500,10 @@ function doAdd(id, price) {
     });
 }
 
+function cartEntries(cart) {
+    return Object.entries(cart).sort((a, b) => (a[1].order ?? 0) - (b[1].order ?? 0));
+}
+
 // ── LOAD CART ──────────────────────────────────────────
 function updateResetBtn() {
     const hasCart = cartItemCount > 0;
@@ -570,8 +574,7 @@ function loadCart() {
         }
 
         let html = '';
-        for (let id in items) {
-            const item = items[id];
+        for (const [id, item] of cartEntries(items)) {
             html += `<div class="cart-item" onclick="openModal(${id})">
                 <div class="ci-info">
                   <div class="ci-name">${item.name}</div>

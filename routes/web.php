@@ -37,11 +37,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // ── CART DATA (AJAX) ───────────────────────────────
-    Route::get('/cart-data', function () {
-        $cart       = session()->get('cart', []);
-        $grandTotal = collect($cart)->sum(fn($i) => $i['price'] * $i['qty']);
-        return response()->json(['cart' => $cart, 'grandTotal' => $grandTotal]);
-    });
+    Route::get('/cart-data',                     [CartController::class, 'cartData']);
 
     // ── CART ───────────────────────────────────────────
     Route::post('/cart/add',                     [CartController::class, 'add']);
