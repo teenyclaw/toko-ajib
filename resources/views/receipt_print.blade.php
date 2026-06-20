@@ -142,7 +142,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); -web
         @foreach($sale->items as $item)
         <div class="item-row">
             <div>
-                <div class="item-name">{{ $item->product->name ?? '—' }}</div>
+                <div class="item-name">{{ $item->name ?? $item->product?->name ?? '—' }}</div>
                 <div class="item-unit">Rp {{ number_format($item->price, 0, ',', '.') }} / pcs</div>
             </div>
             <div class="item-qty">{{ $item->qty }}</div>

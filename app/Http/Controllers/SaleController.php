@@ -60,7 +60,7 @@ class SaleController extends Controller
                 'items'       => $sale->items->map(fn($i) => [
                     'id'         => $i->id,
                     'product_id' => $i->product_id,
-                    'name'       => $i->product?->name ?? '—',
+                    'name'       => $i->name ?? $i->product?->name ?? '—',
                     'qty'        => $i->qty,
                     'price'      => $i->price,
                     'total'      => $i->total,
@@ -86,6 +86,7 @@ class SaleController extends Controller
 
         // Restore stok lama
         foreach ($sale->items as $old) {
+            if (!$old->product_id) continue;
             $p = Product::find($old->product_id);
             if ($p) { $p->increment('stock', $old->qty); }
         }
@@ -133,6 +134,7 @@ class SaleController extends Controller
 
         // Restore stok
         foreach ($sale->items as $item) {
+            if (!$item->product_id) continue;
             $p = Product::find($item->product_id);
             if ($p) { $p->increment('stock', $item->qty); }
         }

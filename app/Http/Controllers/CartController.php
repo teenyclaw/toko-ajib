@@ -6,15 +6,33 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Product;
 use App\Models\Debt;
+use App\Models\Order;
+use App\Services\OrderService;
 use App\Support\CartOrder;
 
 class CartController extends Controller
 {
+    public function __construct(
+        private OrderService $orderService
+    ) {}
+
+    private function isCustomItem($id, ?array $item = null): bool
+    {
+        if (!empty($item['custom'])) {
+            return true;
+        }
+
+        return str_starts_with((string) $id, 'custom_');
+    }
+
     public function updateManual(Request $request)
     {
         $cart = session()->get('cart', []);
         $id   = $request->id;
         if (isset($cart[$id])) {
+            if ($request->has('name') && trim((string) $request->name) !== '') {
+                $cart[$id]['name'] = trim((string) $request->name);
+            }
             if ($request->has('qty') && $request->has('price')) {
                 $cart[$id]['qty']   = max(1, (int)$request->qty);
                 $cart[$id]['price'] = max(0, (int)$request->price);
@@ -24,6 +42,30 @@ class CartController extends Controller
         }
         session()->put('cart', $cart);
         return response()->json($this->calculateCart($cart));
+    }
+
+    public function addManual(Request $request)
+    {
+        $request->validate([
+            'name'  => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'qty'   => 'required|integer|min:1',
+        ]);
+
+        $cart = session()->get('cart', []);
+        $id   = 'custom_' . (int) (microtime(true) * 1000);
+
+        $cart[$id] = [
+            'name'   => trim($request->name),
+            'price'  => (int) $request->price,
+            'qty'    => (int) $request->qty,
+            'order'  => CartOrder::next($cart),
+            'custom' => true,
+        ];
+
+        session()->put('cart', $cart);
+
+        return response()->json(['status' => 'success']);
     }
 
     public function checkoutAjax(Request $request)
@@ -59,18 +101,24 @@ class CartController extends Controller
             'customer_id' => $customerId,
         ]);
 
-        foreach ($cart as $productId => $item) {
+        foreach ($cart as $cartKey => $item) {
+            $isCustom = $this->isCustomItem($cartKey, $item);
+
             SaleItem::create([
                 'sale_id'    => $sale->id,
-                'product_id' => $productId,
+                'product_id' => $isCustom ? null : (int) $cartKey,
+                'name'       => $item['name'] ?? null,
                 'qty'        => $item['qty'],
                 'price'      => $item['price'],
                 'total'      => $item['price'] * $item['qty'],
             ]);
-            $product = Product::find($productId);
-            if ($product) {
-                $product->stock -= $item['qty'];
-                $product->save();
+
+            if (!$isCustom) {
+                $product = Product::find((int) $cartKey);
+                if ($product) {
+                    $product->stock -= $item['qty'];
+                    $product->save();
+                }
             }
         }
 
@@ -89,14 +137,33 @@ class CartController extends Controller
             ]);
         }
 
+        $pendingOrderId = session('pending_order_id');
         session()->forget('cart');
 
+        $whatsappUrl = null;
+        $orderNumber = null;
+
+        if ($pendingOrderId) {
+            $order = Order::find($pendingOrderId);
+            if ($order && in_array($order->status, ['pending', 'processing'], true)) {
+                $order = $this->orderService->completeOrder($order, $sale, auth()->id());
+                $orderNumber = $order->order_number;
+                $whatsappUrl = $this->orderService->buildReceiptWhatsAppUrl(
+                    $sale,
+                    $order->customer_phone
+                );
+            }
+            session()->forget('pending_order_id');
+        }
+
         return response()->json([
-            'status'      => 'success',
-            'change'      => $change,
-            'sale_id'     => $sale->id,
-            'has_debt'    => $debtAmount > 0,
-            'debt_amount' => $debtAmount,
+            'status'        => 'success',
+            'change'        => $change,
+            'sale_id'       => $sale->id,
+            'has_debt'      => $debtAmount > 0,
+            'debt_amount'   => $debtAmount,
+            'order_number'  => $orderNumber,
+            'whatsapp_url'  => $whatsappUrl,
         ]);
     }
 
@@ -117,8 +184,21 @@ class CartController extends Controller
     public function cartData()
     {
         $cart = session()->get('cart', []);
+        $data = $this->calculateCart($cart);
 
-        return response()->json($this->calculateCart($cart));
+        $pendingOrderId = session('pending_order_id');
+        if ($pendingOrderId) {
+            $order = Order::find($pendingOrderId);
+            if ($order) {
+                $data['pending_order'] = [
+                    'id'           => $order->id,
+                    'order_number' => $order->order_number,
+                    'status'       => $order->status,
+                ];
+            }
+        }
+
+        return response()->json($data);
     }
 
     private function calculateCart($cart)
@@ -174,7 +254,9 @@ class CartController extends Controller
 
     public function clear()
     {
-        session()->forget('cart');
+        $this->orderService->releaseProcessingOrder(session('pending_order_id'));
+
+        session()->forget(['cart', 'pending_order_id']);
 
         return response()->json([
             'status'     => 'success',

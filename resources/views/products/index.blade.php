@@ -98,6 +98,11 @@ tbody td{padding:10px 13px;vertical-align:middle;font-size:12.5px;color:var(--tx
 .c-mono{font-family:var(--m);font-size:12px}
 .sn{font-family:var(--m);font-size:13px;font-weight:500}
 .s-ok{color:var(--gn)}.s-lw{color:var(--am)}.s-no{color:var(--rd)}
+.tog{width:38px;height:22px;border-radius:11px;background:var(--bg5);border:1px solid var(--bd2);position:relative;cursor:pointer;transition:all .14s;flex-shrink:0}
+.tog.on{background:var(--gd);border-color:var(--gd2)}
+.tog::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--tx3);transition:all .14s}
+.tog.on::after{left:18px;background:var(--go)}
+.tog-lbl{font-size:10px;color:var(--tx3);margin-top:3px}
 
 /* margin pill */
 .mp{display:inline-flex;align-items:center;font-size:10.5px;font-family:var(--m);padding:2px 6px;border-radius:4px}
@@ -253,6 +258,9 @@ tbody tr:hover .ra,.ra.vis{opacity:1}
   <a href="/dashboard" class="nav-a">
     <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="9" height="9" rx="2"/><rect x="13" y="2" width="9" height="9" rx="2"/><rect x="2" y="13" width="9" height="9" rx="2"/><rect x="13" y="13" width="9" height="9" rx="2"/></svg>Kasir
   </a>
+  <a href="/online-orders" class="nav-a">
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>Pesanan Online
+  </a>
   <a href="/products" class="nav-a on">
     <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>Produk
   </a>
@@ -355,6 +363,7 @@ tbody tr:hover .ra,.ra.vis{opacity:1}
   <th>Margin PCS</th>
   <th>Harga PCS</th>
   <th>Stok</th>
+  <th>Online</th>
   <th style="min-width:116px;text-align:right">Aksi</th>
 </tr>
 </thead>
@@ -422,6 +431,12 @@ tbody tr:hover .ra,.ra.vis{opacity:1}
         <button class="ib ib-c" onclick="cancelStok({{ $p->id }})">✕</button>
       </div>
     </div>
+  </td>
+
+  {{-- ONLINE ORDER --}}
+  <td onclick="event.stopPropagation()">
+    <div class="tog {{ $p->is_orderable ? 'on' : '' }}" id="tog-{{ $p->id }}" onclick="toggleOrderable({{ $p->id }})" title="Tampil di katalog online"></div>
+    <div class="tog-lbl" id="tog-lbl-{{ $p->id }}">{{ $p->is_orderable ? 'Aktif' : 'Off' }}</div>
   </td>
 
   {{-- AKSI --}}
@@ -872,6 +887,17 @@ async function saveStok(id) {
       cancelStok(id); showToast(r.message, 'ok');
     }
   } catch(e) { showToast('Gagal menyimpan', 'err'); }
+}
+
+async function toggleOrderable(id) {
+  try {
+    const r = await callApi('POST', `/products/${id}/toggle-orderable`, {});
+    if (r.status === 'success') {
+      g(`tog-${id}`).classList.toggle('on', r.is_orderable);
+      g(`tog-lbl-${id}`).textContent = r.is_orderable ? 'Aktif' : 'Off';
+      showToast(r.message, 'ok');
+    }
+  } catch(e) { showToast('Gagal mengubah status online', 'err'); }
 }
 
 // ─── DELETE ────────────────────────────────────────────

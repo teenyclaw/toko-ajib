@@ -13,6 +13,11 @@ class Customer extends Model
         return $this->hasMany(Debt::class);
     }
 
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
     public function activeDebts()
     {
         return $this->hasMany(Debt::class)->whereIn('status',['unpaid','partial']);

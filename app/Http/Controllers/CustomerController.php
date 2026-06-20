@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Customer;
+use App\Support\PhoneNormalizer;
 use Illuminate\Support\Facades\Schema;
 
 class CustomerController extends Controller
@@ -50,10 +51,23 @@ class CustomerController extends Controller
             'address' => 'nullable|string|max:500',
         ]);
 
-        // Cek kolom address ada atau tidak
         $data = ['name' => $validated['name']];
-        if (isset($validated['phone']))   $data['phone']   = $validated['phone'];
-        if (Schema::hasColumn('customers','address') && isset($validated['address'])) {
+
+        if (!empty($validated['phone'])) {
+            $normalized = PhoneNormalizer::normalize($validated['phone']);
+            $existing   = PhoneNormalizer::findCustomer($validated['phone']);
+
+            if ($existing) {
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => 'Nomor telepon sudah terdaftar atas nama: ' . $existing->name,
+                ], 422);
+            }
+
+            $data['phone'] = $normalized;
+        }
+
+        if (Schema::hasColumn('customers', 'address') && isset($validated['address'])) {
             $data['address'] = $validated['address'];
         }
 
@@ -81,8 +95,25 @@ class CustomerController extends Controller
 
         $customer = Customer::findOrFail($id);
 
-        $data = ['name' => $validated['name'], 'phone' => $validated['phone'] ?? null];
-        if (Schema::hasColumn('customers','address')) {
+        $data = ['name' => $validated['name']];
+
+        if (!empty($validated['phone'])) {
+            $normalized = PhoneNormalizer::normalize($validated['phone']);
+            $existing   = PhoneNormalizer::findCustomer($validated['phone']);
+
+            if ($existing && $existing->id !== $customer->id) {
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => 'Nomor telepon sudah terdaftar atas nama: ' . $existing->name,
+                ], 422);
+            }
+
+            $data['phone'] = $normalized;
+        } else {
+            $data['phone'] = null;
+        }
+
+        if (Schema::hasColumn('customers', 'address')) {
             $data['address'] = $validated['address'] ?? null;
         }
 

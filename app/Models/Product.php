@@ -20,7 +20,17 @@ class Product extends Model
         'margin_nonmember_pcs',  'margin_nonmember_pcs_type',
         'harga_nonmember_dus',   'harga_nonmember_pcs',
         'stock',
+        'is_orderable',
     ];
+
+    protected $casts = [
+        'is_orderable' => 'boolean',
+    ];
+
+    public function orders()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
 
     public function category()
     {

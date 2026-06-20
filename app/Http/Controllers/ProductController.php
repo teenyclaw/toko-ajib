@@ -113,6 +113,18 @@ class ProductController extends Controller
         return response()->json(['status' => 'success', 'message' => 'Stok diperbarui']);
     }
 
+    public function toggleOrderable($id)
+    {
+        $product = Product::findOrFail($id);
+        $product->update(['is_orderable' => !$product->is_orderable]);
+
+        return response()->json([
+            'status'       => 'success',
+            'is_orderable' => $product->is_orderable,
+            'message'      => $product->is_orderable ? 'Produk aktif di katalog online' : 'Produk disembunyikan dari katalog online',
+        ]);
+    }
+
     public function destroy($id)
     {
         Product::findOrFail($id)->delete();

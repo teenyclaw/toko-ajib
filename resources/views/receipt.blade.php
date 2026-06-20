@@ -30,7 +30,7 @@ table {
     {{-- Ganti @foreach($cart as $item) dengan: --}}
 @foreach($sale->items as $item)
 <tr>
-    <td>{{ $item->product->name ?? '-' }}</td>
+    <td>{{ $item->name ?? $item->product?->name ?? '-' }}</td>
     <td align="center">{{ $item->qty }}</td>
     <td align="right">
         {{ number_format($item->price * $item->qty, 0, ',', '.') }}
