@@ -108,8 +108,13 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:14px;l
 /* CART PANEL */
 .cart-panel{background:var(--bg2);border-left:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden}
 .cart-header{padding:16px 18px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.cart-header-left{display:flex;align-items:center;gap:8px}
 .cart-ttl{font-size:14px;font-weight:500}
 .cart-count{background:var(--gd);color:var(--go);font-size:11px;font-family:var(--mo);font-weight:500;padding:2px 8px;border-radius:20px;border:1px solid var(--gd2)}
+.cart-reset{display:flex;align-items:center;gap:5px;padding:5px 10px;background:transparent;border:1px solid var(--bd2);color:var(--tx3);border-radius:var(--rs);cursor:pointer;font-family:var(--fn);font-size:11.5px;font-weight:500;transition:all .14s;white-space:nowrap}
+.cart-reset:hover:not(:disabled){background:var(--rdd);border-color:rgba(248,113,113,.3);color:var(--rd)}
+.cart-reset:disabled{opacity:.35;cursor:not-allowed}
+.cart-reset svg{width:12px;height:12px;flex-shrink:0}
 
 /* CUSTOMER SECTION */
 .cust-section{padding:12px 18px;border-bottom:1px solid var(--bd);flex-shrink:0}
@@ -287,8 +292,14 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:14px;l
 <!-- CART PANEL -->
 <aside class="cart-panel">
   <div class="cart-header">
-    <div class="cart-ttl">Keranjang</div>
-    <div class="cart-count" id="cart-count">0 item</div>
+    <div class="cart-header-left">
+      <div class="cart-ttl">Keranjang</div>
+      <div class="cart-count" id="cart-count">0 item</div>
+    </div>
+    <button type="button" class="cart-reset" id="reset-btn" onclick="resetCart()" disabled title="Kosongkan keranjang & mulai transaksi baru">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+      Reset
+    </button>
   </div>
 
   <!-- PELANGGAN -->
@@ -398,6 +409,7 @@ const g    = id => document.getElementById(id);
 let priceType   = 'pcs';   // 'pcs' | 'dus'
 let isMember    = false;   // apakah pelanggan dipilih
 let grandTotal  = 0;
+let cartItemCount = 0;
 let currentItem = {};
 
 // ── CLOCK ──────────────────────────────────────────────
@@ -444,6 +456,7 @@ function onCustomerChange() {
     }
 
     showToast(isMember ? '🟢 Mode Harga Member aktif' : '🟣 Mode Harga Non-Member aktif', 'info');
+    updateResetBtn();
 }
 
 // ── ADD TO CART ────────────────────────────────────────
@@ -488,15 +501,67 @@ function doAdd(id, price) {
 }
 
 // ── LOAD CART ──────────────────────────────────────────
+function updateResetBtn() {
+    const hasCart = cartItemCount > 0;
+    const hasForm = !!g('customer').value
+        || (parseInt(g('paid').value) || 0) > 0
+        || !!g('debt-note').value.trim();
+    g('reset-btn').disabled = !hasCart && !hasForm;
+}
+
+function resetCartForm() {
+    g('customer').value = '';
+    onCustomerChange();
+    g('paid').value = '';
+    g('debt-note').value = '';
+    g('change-row').classList.remove('show');
+    g('debt-input-section').classList.remove('show');
+    grandTotal = 0;
+    g('grand-total').textContent = '0';
+    cartItemCount = 0;
+    updateResetBtn();
+}
+
+async function resetCart() {
+    if (!confirm('Kosongkan keranjang dan reset semua data transaksi?')) return;
+
+    const btn = g('reset-btn');
+    btn.disabled = true;
+
+    try {
+        const res = await fetch('/cart/clear', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': CSRF,
+                'Accept': 'application/json',
+            },
+        });
+        const data = await res.json();
+        if (data.status !== 'success') {
+            showToast(data.message || 'Gagal reset keranjang', 'err');
+            return;
+        }
+        resetCartForm();
+        loadCart();
+        showToast('Transaksi baru — keranjang dikosongkan', 'ok');
+    } catch (e) {
+        showToast('Gagal terhubung ke server', 'err');
+        console.error(e);
+    }
+}
+
 function loadCart() {
     fetch('/cart-data').then(r=>r.json()).then(data => {
         grandTotal = data.grandTotal;
         const items = data.cart;
         const count = Object.keys(items).length;
+        cartItemCount = count;
 
         g('cart-count').textContent = count + ' item';
         g('grand-total').textContent = Rp(grandTotal);
         calcChange();
+        updateResetBtn();
 
         const el = g('cart-list');
         if (count === 0) {
@@ -555,6 +620,8 @@ function calcChange() {
     } else {
         ds.classList.remove('show');
     }
+
+    updateResetBtn();
 }
 
 // ── CHECKOUT ───────────────────────────────────────────
@@ -594,12 +661,9 @@ async function checkout() {
         } else {
             showToast('Transaksi berhasil!','ok');
         }
-        // Reset
+        // Reset penuh untuk transaksi baru
+        resetCartForm();
         loadCart();
-        g('paid').value = '';
-        g('debt-note').value = '';
-        g('change-row').classList.remove('show');
-        g('debt-input-section').classList.remove('show');
     } catch(e) { showToast('Gagal terhubung ke server','err'); console.error(e); }
     finally {
         btn.disabled = false;

@@ -49,6 +49,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/cart',                          [CartController::class, 'index']);
     Route::get('/cart/delete/{id}',              [CartController::class, 'delete']);
     Route::get('/cart/update/{id}/{action}',     [CartController::class, 'update']);
+    Route::post('/cart/clear',                    [CartController::class, 'clear']);
 
     // ── CHECKOUT ───────────────────────────────────────
     Route::post('/checkout-ajax',                [CartController::class, 'checkoutAjax']);

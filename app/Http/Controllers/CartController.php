@@ -156,4 +156,16 @@ class CartController extends Controller
         $cart = session()->get('cart', []);
         return view('cart.index', compact('cart'));
     }
+
+    public function clear()
+    {
+        session()->forget('cart');
+
+        return response()->json([
+            'status'     => 'success',
+            'cart'       => [],
+            'grandTotal' => 0,
+            'message'    => 'Keranjang dikosongkan',
+        ]);
+    }
 }
