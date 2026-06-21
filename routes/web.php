@@ -6,6 +6,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\ImportController;
+use App\Http\Controllers\ExportController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\NonMemberController;
 use App\Http\Controllers\OrderSettingController;
@@ -98,6 +99,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
     Route::get('/import',                        [ImportController::class, 'index']);
     Route::post('/import',                       [ImportController::class, 'import']);
+    Route::get('/export/products.csv',            [ExportController::class, 'productsCsv'])->name('export.products');
+    Route::get('/export/customers.csv',           [ExportController::class, 'customersCsv'])->name('export.customers');
+    Route::get('/export/backup.sql',             [ExportController::class, 'databaseSql'])->name('export.sql');
 
     Route::get('/customers',                     [CustomerController::class, 'index']);
     Route::post('/customers',                    [CustomerController::class, 'store']);

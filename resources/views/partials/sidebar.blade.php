@@ -53,7 +53,7 @@ HTML;
   {!! $link('nonmember', '/nonmember', 'Harga Non-Member', $iconNonMember, true) !!}
   <div class="nav-sec">Sistem</div>
   {!! $link('settings-users', '/settings/users', 'Pengguna', $iconUsers, true) !!}
-  {!! $link('import', '/import', 'Import CSV', $iconImport, true) !!}
+  {!! $link('import', '/import', 'Import / Export', $iconImport, true) !!}
   @endif
 </nav>
 <div class="sb-foot">

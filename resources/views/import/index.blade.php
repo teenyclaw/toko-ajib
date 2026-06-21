@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Import CSV — POS</title>
+<title>Import & Export — POS</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -44,6 +44,16 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .topbar-title { font-size: 16px; font-weight: 500; }
 
 .content-area { flex: 1; overflow-y: auto; padding: 28px; display: grid; grid-template-columns: 420px 1fr; gap: 24px; align-items: start; }
+@media(max-width:900px){.content-area{grid-template-columns:1fr}}
+
+.export-list { display: flex; flex-direction: column; gap: 10px; }
+.export-btn { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text); text-decoration: none; font-size: 13.5px; font-weight: 500; transition: all 0.15s; }
+.export-btn:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
+.export-btn svg { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.7; }
+.export-btn:hover svg { opacity: 1; }
+.export-btn-meta { font-size: 11.5px; color: var(--text3); font-weight: 400; margin-top: 2px; }
+.export-btn-text { flex: 1; }
+.export-note { font-size: 12px; color: var(--text3); line-height: 1.6; margin-top: 14px; padding: 12px 14px; background: var(--bg3); border-radius: var(--radius-sm); border: 1px solid var(--border); }
 
 .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
 .card-header { padding: 16px 20px; border-bottom: 1px solid var(--border); }
@@ -94,11 +104,12 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 
     <main class="main">
         <div class="topbar">
-            <div class="topbar-title">Import Produk CSV</div>
+            <div class="topbar-title">Import & Export Data</div>
         </div>
 
         <div class="content-area">
-            <!-- FORM -->
+            <div style="display:flex;flex-direction:column;gap:24px">
+            <!-- IMPORT -->
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">Upload File CSV</div>
@@ -144,6 +155,44 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
                         </button>
                     </form>
                 </div>
+            </div>
+
+            <!-- EXPORT -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Export Data</div>
+                    <div class="card-sub">Unduh backup produk, pelanggan, atau database lengkap</div>
+                </div>
+                <div class="card-body">
+                    <div class="export-list">
+                        <a href="{{ route('export.products') }}" class="export-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            <div class="export-btn-text">
+                                Export Produk CSV
+                                <div class="export-btn-meta">Format kompatibel dengan import</div>
+                            </div>
+                        </a>
+                        <a href="{{ route('export.customers') }}" class="export-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            <div class="export-btn-text">
+                                Export Pelanggan CSV
+                                <div class="export-btn-meta">Nama, telepon, alamat</div>
+                            </div>
+                        </a>
+                        <a href="{{ route('export.sql') }}" class="export-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            <div class="export-btn-text">
+                                Export Database SQL
+                                <div class="export-btn-meta">Backup lengkap: produk, transaksi, pesanan, user</div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="export-note">
+                        File SQL dapat di-restore lewat <strong>phpMyAdmin → Import</strong>.
+                        CSV produk bisa di-upload kembali lewat form import di atas.
+                    </div>
+                </div>
+            </div>
             </div>
 
             <!-- GUIDE -->
