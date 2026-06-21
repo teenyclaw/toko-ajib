@@ -113,6 +113,32 @@ class ProductController extends Controller
         return response()->json(['status' => 'success', 'message' => 'Stok diperbarui']);
     }
 
+    public function updateDetails(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'name'        => 'required|string|max:255',
+            'category_id' => 'required|exists:categories,id',
+            'qty_per_dus' => 'required|integer|min:1',
+        ]);
+
+        $product = Product::findOrFail($id);
+        $data    = array_merge($product->toArray(), $validated);
+        $product->update($this->calcPrices($data));
+
+        $fresh = $product->fresh('category');
+
+        return response()->json([
+            'status'         => 'success',
+            'name'           => $fresh->name,
+            'category_id'    => $fresh->category_id,
+            'category_name'  => $fresh->category?->name ?? '—',
+            'qty_per_dus'    => $fresh->qty_per_dus,
+            'harga_jual_dus' => $fresh->harga_jual_dus,
+            'harga_jual_pcs' => $fresh->harga_jual_pcs,
+            'message'        => 'Data produk diperbarui',
+        ]);
+    }
+
     public function toggleOrderable($id)
     {
         $product = Product::findOrFail($id);

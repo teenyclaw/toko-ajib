@@ -28,6 +28,10 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:14px;l
 .ni{width:14px;height:14px;opacity:.6}
 .nav-a.on .ni{opacity:1}
 .sb-foot{padding:12px 14px;border-top:1px solid var(--bd)}
+.u-row{display:flex;align-items:center;gap:8px}
+.uav{width:26px;height:26px;border-radius:50%;background:var(--gd);border:1px solid rgba(201,164,78,.17);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--go)}
+.u-nm{font-size:12.5px;font-weight:500}
+.u-rl{font-size:10.5px;color:var(--tx3)}
 .main{padding:0 0 40px}
 .topbar{height:52px;padding:0 22px;border-bottom:1px solid var(--bd);background:var(--bg2);display:flex;align-items:center;gap:10px}
 .tb-ttl{font-size:14.5px;font-weight:500;flex:1}
@@ -58,17 +62,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:14px;l
 </head>
 <body>
 <div class="app">
-<aside class="sb">
-<div class="sb-logo"><div class="logo"><div class="logo-ico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h7v7H3V3zm0 11h7v7H3v-7zm11-11h7v7h-7V3z"/></svg></div><div><div class="logo-name">TOKO AJIB</div><div class="logo-tag">Point of Sale</div></div></div></div>
-<nav class="nav">
-  <div class="nav-sec">Utama</div>
-  <a href="/dashboard" class="nav-a"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="9" height="9" rx="2"/><rect x="13" y="2" width="9" height="9" rx="2"/><rect x="2" y="13" width="9" height="9" rx="2"/><rect x="13" y="13" width="9" height="9" rx="2"/></svg>Kasir</a>
-  <a href="/online-orders" class="nav-a"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg>Pesanan Online</a>
-  <a href="/settings/order" class="nav-a on"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>Pengaturan Order</a>
-  <a href="/products" class="nav-a"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/></svg>Produk</a>
-</nav>
-<div class="sb-foot"><div style="font-size:12px;color:var(--tx3)">{{ auth()->user()->name ?? 'Admin' }}</div></div>
-</aside>
+@include('partials.sidebar', ['active' => 'settings-order'])
 
 <main class="main">
 <div class="topbar">

@@ -90,23 +90,14 @@ tbody td{padding:11px 14px;font-size:12.5px;color:var(--tx2);vertical-align:midd
 </head>
 <body>
 <div class="app">
-<aside class="sb">
-<div class="sb-logo"><div class="logo"><div class="logo-ico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h7v7H3V3zm0 11h7v7H3v-7zm11-11h7v7h-7V3z"/></svg></div><div><div class="logo-name">TOKO AJIB</div><div class="logo-tag">Point of Sale</div></div></div></div>
-<nav class="nav">
-  <div class="nav-sec">Utama</div>
-  <a href="/dashboard" class="nav-a"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="9" height="9" rx="2"/><rect x="13" y="2" width="9" height="9" rx="2"/><rect x="2" y="13" width="9" height="9" rx="2"/><rect x="13" y="13" width="9" height="9" rx="2"/></svg>Kasir</a>
-  <a href="/online-orders" class="nav-a on"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>Pesanan Online</a>
-  <a href="/products" class="nav-a"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/></svg>Produk</a>
-  <a href="/transactions" class="nav-a"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg>Transaksi</a>
-  <a href="/customers" class="nav-a"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="7" r="4"/><path d="M2 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>Pelanggan</a>
-</nav>
-<div class="sb-foot"><div class="u-row"><div class="uav">{{ substr(auth()->user()->name??'A',0,1) }}</div><div><div class="u-nm">{{ auth()->user()->name??'Admin' }}</div><div class="u-rl">Kasir</div></div></div></div>
-</aside>
+@include('partials.sidebar', ['active' => 'online-orders'])
 
 <main class="main">
 <div class="topbar">
   <div class="tb-ttl">Riwayat Pesanan Online</div>
+  @if(auth()->user()->isAdmin())
   <a href="/settings/order" class="btn btn-ghost">Pengaturan</a>
+  @endif
   <a href="/dashboard" class="btn btn-gold">Buka Kasir</a>
 </div>
 

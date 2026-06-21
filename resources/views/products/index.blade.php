@@ -114,6 +114,8 @@ tbody td{padding:10px 13px;vertical-align:middle;font-size:12.5px;color:var(--tx
 .ie{background:var(--bg4);border:1px solid var(--bd3);color:var(--tx);border-radius:var(--rx);padding:5px 8px;font-family:var(--m);font-size:12px;outline:none;width:100%;min-width:75px;transition:border .14s}
 .ie:focus{border-color:var(--go);box-shadow:0 0 0 2px var(--gd2)}
 .ie-sm{min-width:55px}
+.ie-text{font-family:var(--f);min-width:120px}
+.ie-cat{min-width:110px;font-family:var(--f);font-size:12px;cursor:pointer}
 .ie-row{display:flex;gap:5px;margin-top:4px}
 .ib{padding:4px 9px;border-radius:var(--rx);font-family:var(--f);font-size:11.5px;font-weight:600;cursor:pointer;transition:all .12s;border:none}
 .ib-s{background:var(--go);color:#09090b}
@@ -245,43 +247,7 @@ tbody tr:hover .ra,.ra.vis{opacity:1}
 <body>
 <div class="app">
 
-<!-- SIDEBAR -->
-<aside class="sb">
-<div class="sb-logo">
-  <div class="logo">
-    <div class="logo-ico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h7v7H3V3zm0 11h7v7H3v-7zm11-11h7v7h-7V3zm4 11h-1v3h-3v1h3v3h1v-3h3v-1h-3v-3z"/></svg></div>
-    <div><div class="logo-name">TOKO AJIB</div><div class="logo-tag">Point of Sale</div></div>
-  </div>
-</div>
-<nav class="nav">
-  <div class="nav-sec">Utama</div>
-  <a href="/dashboard" class="nav-a">
-    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="9" height="9" rx="2"/><rect x="13" y="2" width="9" height="9" rx="2"/><rect x="2" y="13" width="9" height="9" rx="2"/><rect x="13" y="13" width="9" height="9" rx="2"/></svg>Kasir
-  </a>
-  <a href="/online-orders" class="nav-a">
-    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>Pesanan Online
-  </a>
-  <a href="/products" class="nav-a on">
-    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>Produk
-  </a>
-  <a href="/transactions" class="nav-a">
-    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>Transaksi
-  </a>
-  <a href="/customers" class="nav-a">
-    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="7" r="4"/><path d="M2 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M19 8v6M22 11h-6"/></svg>Pelanggan
-  </a>
-  <div class="nav-sec">Sistem</div>
-  <a href="/import" class="nav-a">
-    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Import CSV
-  </a>
-</nav>
-<div class="sb-foot">
-  <div class="u-row">
-    <div class="uav">{{ substr(auth()->user()->name??'A',0,1) }}</div>
-    <div><div class="u-nm">{{ auth()->user()->name??'Admin' }}</div><div class="u-rl">Kasir</div></div>
-  </div>
-</div>
-</aside>
+@include('partials.sidebar', ['active' => 'products'])
 
 <!-- MAIN -->
 <main class="main">
@@ -372,12 +338,29 @@ tbody tr:hover .ra,.ra.vis{opacity:1}
 <tr id="row-{{ $p->id }}">
 
   {{-- NAMA --}}
-  <td>
-    <div class="c-nm">{{ $p->name }}</div>
+  <td id="nm-cell-{{ $p->id }}">
+    <div id="nm-disp-{{ $p->id }}">
+      <div class="c-nm" id="nm-val-{{ $p->id }}">{{ $p->name }}</div>
+    </div>
+    <div id="nm-edit-{{ $p->id }}" style="display:none">
+      <input class="ie ie-text" type="text" id="nm-inp-{{ $p->id }}" value="{{ $p->name }}" maxlength="255"
+        onkeydown="if(event.key==='Enter')saveInfo({{ $p->id }});if(event.key==='Escape')cancelInfo({{ $p->id }})">
+    </div>
   </td>
 
   {{-- KATEGORI --}}
-  <td><span class="c-cat">{{ $p->category->name ?? '—' }}</span></td>
+  <td id="cat-cell-{{ $p->id }}">
+    <div id="cat-disp-{{ $p->id }}">
+      <span class="c-cat" id="cat-val-{{ $p->id }}">{{ $p->category->name ?? '—' }}</span>
+    </div>
+    <div id="cat-edit-{{ $p->id }}" style="display:none">
+      <select class="ie ie-cat" id="cat-inp-{{ $p->id }}">
+        @foreach($categories as $cat)
+        <option value="{{ $cat->id }}" {{ $p->category_id == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
+        @endforeach
+      </select>
+    </div>
+  </td>
 
   {{-- HARGA MODAL (inline edit) --}}
   <td id="modal-cell-{{ $p->id }}">
@@ -396,7 +379,15 @@ tbody tr:hover .ra,.ra.vis{opacity:1}
   </td>
 
   {{-- QTY --}}
-  <td><span class="c-mono">{{ $p->qty_per_dus }}</span></td>
+  <td id="qty-cell-{{ $p->id }}">
+    <div id="qty-disp-{{ $p->id }}">
+      <span class="c-mono" id="qty-val-{{ $p->id }}">{{ $p->qty_per_dus }}</span>
+    </div>
+    <div id="qty-edit-{{ $p->id }}" style="display:none">
+      <input class="ie ie-sm" type="number" id="qty-inp-{{ $p->id }}" value="{{ $p->qty_per_dus }}" min="1"
+        onkeydown="if(event.key==='Enter')saveInfo({{ $p->id }});if(event.key==='Escape')cancelInfo({{ $p->id }})">
+    </div>
+  </td>
 
   {{-- MARGIN DUS --}}
   <td>
@@ -442,6 +433,14 @@ tbody tr:hover .ra,.ra.vis{opacity:1}
   {{-- AKSI --}}
   <td>
     <div class="ra" id="ra-{{ $p->id }}">
+      {{-- Edit nama, kategori, qty --}}
+      <button class="rb" id="info-btn-{{ $p->id }}" title="Edit Nama / Kategori / Qty" onclick="toggleInfo({{ $p->id }})">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button>
+      <div id="info-actions-{{ $p->id }}" style="display:none;align-items:center;gap:4px">
+        <button class="ib ib-s" onclick="saveInfo({{ $p->id }})">Simpan</button>
+        <button class="ib ib-c" onclick="cancelInfo({{ $p->id }})">Batal</button>
+      </div>
       {{-- Edit harga modal --}}
       <button class="rb rb" title="Edit Harga Modal" onclick="toggleModal({{ $p->id }})">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
@@ -827,6 +826,79 @@ async function submitBulk() {
       setTimeout(() => location.reload(), 900);
     }
   } finally { setBtn('b-btn', false, '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>Terapkan ke Semua'); }
+}
+
+// ─── INLINE: NAMA / KATEGORI / QTY ───────────────────
+const infoOrig = {};
+
+function toggleInfo(id) {
+  const row = g(`row-${id}`);
+  const editing = g(`nm-edit-${id}`).style.display === 'none';
+  if (editing) {
+    infoOrig[id] = {
+      name: g(`nm-inp-${id}`).value,
+      category_id: g(`cat-inp-${id}`).value,
+      qty: g(`qty-inp-${id}`).value,
+    };
+    ['nm', 'cat', 'qty'].forEach(p => {
+      g(`${p}-disp-${id}`).style.display = 'none';
+      g(`${p}-edit-${id}`).style.display = 'block';
+    });
+    g(`info-actions-${id}`).style.display = 'flex';
+    g(`info-btn-${id}`).style.display = 'none';
+    row.classList.add('editing');
+    g(`ra-${id}`).classList.add('vis');
+    g(`nm-inp-${id}`).focus();
+    g(`nm-inp-${id}`).select();
+  } else {
+    cancelInfo(id);
+  }
+}
+
+function cancelInfo(id) {
+  if (infoOrig[id]) {
+    g(`nm-inp-${id}`).value = infoOrig[id].name;
+    g(`cat-inp-${id}`).value = infoOrig[id].category_id;
+    g(`qty-inp-${id}`).value = infoOrig[id].qty;
+  }
+  ['nm', 'cat', 'qty'].forEach(p => {
+    g(`${p}-disp-${id}`).style.display = 'block';
+    g(`${p}-edit-${id}`).style.display = 'none';
+  });
+  g(`info-actions-${id}`).style.display = 'none';
+  g(`info-btn-${id}`).style.display = '';
+  g(`row-${id}`).classList.remove('editing');
+  g(`ra-${id}`).classList.remove('vis');
+}
+
+async function saveInfo(id) {
+  const name = g(`nm-inp-${id}`).value.trim();
+  const categoryId = g(`cat-inp-${id}`).value;
+  const qty = parseInt(g(`qty-inp-${id}`).value, 10);
+
+  if (!name) { showToast('Nama barang wajib diisi', 'err'); return; }
+  if (!categoryId) { showToast('Pilih kategori', 'err'); return; }
+  if (isNaN(qty) || qty < 1) { showToast('Qty per dus minimal 1', 'err'); return; }
+
+  try {
+    const r = await callApi('POST', `/products/${id}/update-details`, {
+      name,
+      category_id: categoryId,
+      qty_per_dus: qty,
+    });
+    if (r.status === 'success') {
+      g(`nm-val-${id}`).textContent = r.name;
+      g(`cat-val-${id}`).textContent = r.category_name;
+      g(`qty-val-${id}`).textContent = r.qty_per_dus;
+      flashPrices(id, r.harga_jual_dus, r.harga_jual_pcs);
+      cancelInfo(id);
+      showToast(r.message, 'ok');
+    } else {
+      showToast(r.message || 'Gagal menyimpan', 'err');
+    }
+  } catch (e) {
+    showToast('Gagal menyimpan', 'err');
+  }
 }
 
 // ─── INLINE: HARGA MODAL ───────────────────────────────

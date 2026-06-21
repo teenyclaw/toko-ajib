@@ -18,26 +18,26 @@
 }
 html, body { height: 100%; }
 body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; -webkit-font-smoothing: antialiased; }
-.app { display: grid; grid-template-columns: 220px 1fr; height: 100vh; overflow: hidden; }
-.sidebar { background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-.sidebar-logo { padding: 24px 20px 20px; border-bottom: 1px solid var(--border); }
-.logo-mark { display: flex; align-items: center; gap: 10px; }
-.logo-icon { width: 32px; height: 32px; background: var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
-.logo-icon svg { width: 18px; height: 18px; color: #0d0d0f; }
-.logo-text { font-size: 15px; font-weight: 600; color: var(--text); }
-.logo-sub { font-size: 10px; color: var(--text3); letter-spacing: 0.8px; text-transform: uppercase; }
-.nav { padding: 12px 10px; flex: 1; }
-.nav-section { font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; padding: 16px 10px 6px; font-weight: 500; }
-.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: var(--radius-sm); color: var(--text2); text-decoration: none; font-size: 13.5px; transition: all 0.15s; margin-bottom: 2px; }
-.nav-item:hover { background: var(--bg3); color: var(--text); }
-.nav-item.active { background: var(--gold-dim); color: var(--gold); }
-.nav-icon { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.7; }
-.nav-item.active .nav-icon { opacity: 1; }
-.sidebar-footer { padding: 16px; border-top: 1px solid var(--border); }
-.user-card { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--radius-sm); }
-.avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--gold-dim); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; color: var(--gold); flex-shrink: 0; }
-.user-name { font-size: 13px; font-weight: 500; }
-.user-role { font-size: 11px; color: var(--text3); }
+.app { display: grid; grid-template-columns: 216px 1fr; height: 100vh; overflow: hidden; }
+.sb { background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+.sb-logo { padding: 20px 16px 18px; border-bottom: 1px solid var(--border); }
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-ico { width: 30px; height: 30px; background: var(--gold); border-radius: 7px; display: flex; align-items: center; justify-content: center; }
+.logo-ico svg { width: 16px; height: 16px; color: #0d0d0f; }
+.logo-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.logo-tag { font-size: 9.5px; color: var(--text3); letter-spacing: 0.9px; text-transform: uppercase; }
+.nav { padding: 8px 6px; flex: 1; }
+.nav-sec { font-size: 9.5px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; padding: 14px 10px 5px; }
+.nav-a { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: var(--radius-sm); color: var(--text2); text-decoration: none; font-size: 13px; margin-bottom: 1px; }
+.nav-a:hover { background: var(--bg3); color: var(--text); }
+.nav-a.on { background: var(--gold-dim); color: var(--gold); }
+.ni { width: 14px; height: 14px; opacity: 0.6; }
+.nav-a.on .ni { opacity: 1; }
+.sb-foot { padding: 12px 14px; border-top: 1px solid var(--border); }
+.u-row { display: flex; align-items: center; gap: 8px; }
+.uav { width: 26px; height: 26px; border-radius: 50%; background: var(--gold-dim); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: var(--gold); }
+.u-nm { font-size: 12.5px; font-weight: 500; }
+.u-rl { font-size: 10.5px; color: var(--text3); }
 
 .main { display: flex; flex-direction: column; overflow: hidden; }
 .topbar { padding: 16px 28px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
@@ -90,29 +90,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 </head>
 <body>
 <div class="app">
-    <aside class="sidebar">
-        <div class="sidebar-logo">
-            <div class="logo-mark">
-                <div class="logo-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h7v7H3V3zm0 11h7v7H3v-7zm11-11h7v7h-7V3zm4 11h-1v3h-3v1h3v3h1v-3h3v-1h-3v-3z"/></svg></div>
-                <div><div class="logo-text">TOKO AJIB</div><div class="logo-sub">Point of Sale</div></div>
-            </div>
-        </div>
-        <nav class="nav">
-            <div class="nav-section">Utama</div>
-            <a href="/dashboard" class="nav-item"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="9" height="9" rx="2"/><rect x="13" y="2" width="9" height="9" rx="2"/><rect x="2" y="13" width="9" height="9" rx="2"/><rect x="13" y="13" width="9" height="9" rx="2"/></svg>Kasir</a>
-            <a href="/products" class="nav-item"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>Produk</a>
-            <a href="/transactions" class="nav-item"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>Transaksi</a>
-            <a href="/customers" class="nav-item"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="7" r="4"/><path d="M2 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M19 8v6M22 11h-6"/></svg>Pelanggan</a>
-            <div class="nav-section">Sistem</div>
-            <a href="/import" class="nav-item active"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Import CSV</a>
-        </nav>
-        <div class="sidebar-footer">
-            <div class="user-card">
-                <div class="avatar">{{ substr(auth()->user()->name ?? 'A', 0, 1) }}</div>
-                <div><div class="user-name">{{ auth()->user()->name ?? 'Admin' }}</div><div class="user-role">Admin</div></div>
-            </div>
-        </div>
-    </aside>
+    @include('partials.sidebar', ['active' => 'import'])
 
     <main class="main">
         <div class="topbar">
