@@ -16,25 +16,36 @@
     @php $unit = $item['unit'] ?? 'pcs'; @endphp
     <div class="cart-item">
       <div class="cart-item-name">{{ $item['name'] }}</div>
-      <div class="cart-item-meta">
-        Qty: {{ $item['qty'] }} {{ \App\Support\OrderUnits::label($unit) }}
-        @if(!empty($item['note']))
-          · {{ $item['note'] }}
-        @endif
-      </div>
-      <div class="cart-actions">
-        <form method="POST" action="{{ route('order.cart.update', $id) }}" style="display:flex;gap:8px;align-items:center">
-          @csrf
-          @method('PATCH')
-          <input type="number" name="qty" value="{{ $item['qty'] }}" min="1" max="{{ $item['stock'] ?? 9999 }}" style="width:64px;padding:8px;text-align:center;background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--rs);color:var(--tx)">
-          <button type="submit" class="btn btn-ghost btn-sm">Update</button>
-        </form>
-        <form method="POST" action="{{ route('order.cart.remove', $id) }}" onsubmit="return confirm('Hapus item ini?')">
-          @csrf
-          @method('DELETE')
-          <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--rd)">Hapus</button>
-        </form>
-      </div>
+      <form method="POST" action="{{ route('order.cart.update', $id) }}" class="cart-item-form">
+        @csrf
+        @method('PATCH')
+        <div class="cart-item-fields">
+          <label class="cart-field">
+            <span>Qty</span>
+            <input type="number" name="qty" value="{{ $item['qty'] }}" min="1" max="{{ $item['stock'] ?? 9999 }}">
+          </label>
+          <label class="cart-field">
+            <span>Satuan</span>
+            <select name="unit">
+              @foreach(\App\Support\OrderUnits::all() as $u)
+                <option value="{{ $u }}" @selected($unit === $u)>{{ \App\Support\OrderUnits::label($u) }}</option>
+              @endforeach
+            </select>
+          </label>
+        </div>
+        <label class="cart-field cart-field-full">
+          <span>Catatan item</span>
+          <input type="text" name="note" value="{{ $item['note'] ?? '' }}" placeholder="Opsional" maxlength="500">
+        </label>
+        <div class="cart-actions">
+          <button type="submit" class="btn btn-ghost btn-sm">Simpan</button>
+        </div>
+      </form>
+      <form method="POST" action="{{ route('order.cart.remove', $id) }}" onsubmit="return confirm('Hapus item ini?')" class="cart-remove-form">
+        @csrf
+        @method('DELETE')
+        <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--rd)">Hapus</button>
+      </form>
     </div>
   @endforeach
 
@@ -51,3 +62,17 @@
   </div>
 @endif
 @endsection
+
+@push('styles')
+<style>
+.cart-item-form{margin-bottom:8px}
+.cart-item-fields{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.cart-field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:120px}
+.cart-field span{font-size:11px;color:var(--tx2)}
+.cart-field input,.cart-field select{
+  padding:8px 10px;background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--rs);color:var(--tx);font-size:13px;
+}
+.cart-field-full{width:100%;margin-bottom:8px}
+.cart-remove-form{margin-top:-4px}
+</style>
+@endpush

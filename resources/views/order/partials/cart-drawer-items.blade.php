@@ -6,20 +6,27 @@
 @else
   <ul class="cart-drawer-list">
     @foreach($cart as $id => $item)
-      <li class="cart-drawer-line" data-id="{{ $id }}">
+      @php $unit = $item['unit'] ?? 'pcs'; @endphp
+      <li class="cart-drawer-line" data-line-key="{{ $id }}">
         <div class="cart-drawer-line-main">
           <div class="cart-drawer-line-info">
             <span class="cart-drawer-line-name">{{ $item['name'] }}</span>
-            @php $unit = $item['unit'] ?? 'pcs'; @endphp
-            <span class="cart-drawer-line-meta">{{ \App\Support\OrderUnits::label($unit) }}@if(!empty($item['note'])) — {{ $item['note'] }}@endif</span>
           </div>
           <span class="cart-drawer-line-qty">x{{ $item['qty'] }}</span>
         </div>
+        <div class="cart-drawer-line-edit">
+          <select class="cart-unit-select" data-line-key="{{ $id }}" aria-label="Satuan">
+            @foreach(\App\Support\OrderUnits::all() as $u)
+              <option value="{{ $u }}" @selected($unit === $u)>{{ \App\Support\OrderUnits::label($u) }}</option>
+            @endforeach
+          </select>
+          <input type="text" class="cart-note-input" data-line-key="{{ $id }}" value="{{ $item['note'] ?? '' }}" placeholder="Catatan item" maxlength="500" aria-label="Catatan item">
+        </div>
         <div class="cart-drawer-line-actions">
-          <button type="button" class="cart-qty-btn" data-action="minus" data-id="{{ $id }}" aria-label="Kurangi">−</button>
+          <button type="button" class="cart-qty-btn" data-action="minus" data-line-key="{{ $id }}" aria-label="Kurangi">−</button>
           <span class="cart-qty-num">{{ $item['qty'] }}</span>
-          <button type="button" class="cart-qty-btn" data-action="plus" data-id="{{ $id }}" data-max="{{ $item['stock'] ?? 9999 }}" aria-label="Tambah">+</button>
-          <button type="button" class="cart-remove-btn" data-id="{{ $id }}" aria-label="Hapus">×</button>
+          <button type="button" class="cart-qty-btn" data-action="plus" data-line-key="{{ $id }}" data-max="{{ $item['stock'] ?? 9999 }}" aria-label="Tambah">+</button>
+          <button type="button" class="cart-remove-btn" data-line-key="{{ $id }}" aria-label="Hapus">×</button>
         </div>
       </li>
     @endforeach

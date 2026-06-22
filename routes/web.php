@@ -27,10 +27,10 @@ Route::prefix('order')->name('order.')->group(function () {
     Route::get('/cart/data', [OrderCartController::class, 'data'])->name('cart.data');
     Route::post('/cart/add', [OrderCartController::class, 'add'])->name('cart.add');
     Route::patch('/cart/{lineKey}', [OrderCartController::class, 'update'])
-        ->where('lineKey', '[0-9]+:(pcs|dus|gantung|strip|pak)')
+        ->where('lineKey', '[0-9]+__(pcs|dus|gantung|strip|pak)')
         ->name('cart.update');
     Route::delete('/cart/{lineKey}', [OrderCartController::class, 'remove'])
-        ->where('lineKey', '[0-9]+:(pcs|dus|gantung|strip|pak)')
+        ->where('lineKey', '[0-9]+__(pcs|dus|gantung|strip|pak)')
         ->name('cart.remove');
     Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');

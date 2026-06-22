@@ -358,31 +358,21 @@ class OrderService
                 );
             }
 
-            $price       = $this->posPriceForUnit($product, $item->unit);
-            $displayName = $this->formatPosItemName($item);
-            $cartKey     = (string) $product->id;
+            $price    = $this->posPriceForUnit($product, $item->unit);
+            $cartKey  = 'order_' . $item->id;
 
-            if (isset($cart[$cartKey])) {
-                $cartKey = 'order_' . $item->id;
-                $cart[$cartKey] = [
-                    'name'      => $displayName,
-                    'price'     => (int) $price,
-                    'qty'       => $item->qty,
-                    'order'     => $item->sort_order,
-                    'harga_pcs' => $product->harga_jual_pcs,
-                    'harga_dus' => $product->harga_jual_dus ?? $product->harga_jual_pcs,
-                    'custom'    => true,
-                ];
-            } else {
-                $cart[$cartKey] = [
-                    'name'      => $displayName,
-                    'price'     => (int) $price,
-                    'qty'       => $item->qty,
-                    'order'     => $item->sort_order,
-                    'harga_pcs' => $product->harga_jual_pcs,
-                    'harga_dus' => $product->harga_jual_dus ?? $product->harga_jual_pcs,
-                ];
-            }
+            $cart[$cartKey] = [
+                'name'       => $item->product_name,
+                'price'      => (int) $price,
+                'qty'        => $item->qty,
+                'unit'       => $item->unit,
+                'note'       => $item->note,
+                'product_id' => $product->id,
+                'order'      => $item->sort_order,
+                'harga_pcs'  => $product->harga_jual_pcs,
+                'harga_dus'  => $product->harga_jual_dus ?? $product->harga_jual_pcs,
+                'from_order' => true,
+            ];
 
             $item->update(['price' => $price]);
         }

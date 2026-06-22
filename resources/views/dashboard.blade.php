@@ -183,6 +183,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:14px;l
 .ci-name{font-size:13px;font-weight:500;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ci-badge{display:inline-block;font-size:9px;color:var(--pu);background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.25);border-radius:4px;padding:1px 5px;margin-left:5px;vertical-align:middle;font-weight:500;letter-spacing:.3px}
 .ci-price{font-size:11px;color:var(--tx3);font-family:var(--mo);margin-top:1px}
+.ci-meta{font-size:10.5px;color:var(--tx3);margin-top:2px;line-height:1.35}
 .ci-total{font-size:13px;font-family:var(--mo);color:var(--tx);font-weight:500;flex-shrink:0}
 .qty-ctrl{display:flex;align-items:center;gap:5px;flex-shrink:0}
 .qty-btn{width:22px;height:22px;border:1px solid var(--bd2);background:var(--bg4);color:var(--tx2);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .1s;font-size:14px}
@@ -527,6 +528,18 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:14px;l
       </div>
     </div>
     <div class="m-fg">
+      <label class="m-fl">Satuan</label>
+      <select class="m-fi" id="modal-unit" onchange="onModalUnitChange()" style="font-family:var(--fn)">
+        @foreach(\App\Support\OrderUnits::all() as $u)
+          <option value="{{ $u }}">{{ \App\Support\OrderUnits::label($u) }}</option>
+        @endforeach
+      </select>
+    </div>
+    <div class="m-fg">
+      <label class="m-fl">Catatan Item</label>
+      <input class="m-fi" type="text" id="modal-note" placeholder="Opsional" maxlength="500" style="font-family:var(--fn)">
+    </div>
+    <div class="m-fg">
       <label class="m-fl">Jumlah (Qty)</label>
       <input class="m-fi" type="number" id="modal-qty" min="1" oninput="onQtyChange()">
     </div>
@@ -594,19 +607,20 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:14px;l
 <div class="toast" id="toast"><div class="t-dot"></div><span id="t-msg"></span></div>
 
 <script>
+const ORDER_UNITS = @json(\App\Support\OrderUnits::unitOptions());
 @verbatim
 
 const CSRF = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
 const Rp   = n => new Intl.NumberFormat('id-ID').format(Math.round(n));
 const g    = id => document.getElementById(id);
 const esc  = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
-const cartIdJs = id => JSON.stringify(String(id));
 
 let priceType   = 'pcs';   // 'pcs' | 'dus'
 let isMember    = false;   // apakah pelanggan dipilih
 let grandTotal  = 0;
 let cartItemCount = 0;
 let currentItem = {};
+let currentItemId = '';
 
 const LAYOUT_KEY = 'pos_layout_v3';
 
@@ -703,6 +717,7 @@ $(document).ready(function() {
     refreshOrdersBadge();
     setInterval(refreshOrdersBadge, 15000);
     applySoundBtn();
+    g('cart-list')?.addEventListener('click', handleCartListClick);
 });
 
 // ── PRICE TYPE ─────────────────────────────────────────
@@ -788,6 +803,36 @@ function cartEntries(cart) {
 }
 
 // ── LOAD CART ──────────────────────────────────────────
+async function parseJsonResponse(res) {
+    const text = await res.text();
+    if (!text) return { status: 'error', message: 'Respons server kosong (' + res.status + ')' };
+    try { return JSON.parse(text); }
+    catch (e) { return { status: 'error', message: 'Gagal memproses respons server (' + res.status + ')' }; }
+}
+
+function cartMetaLine(item) {
+    const parts = [];
+    const unit = item.unit || 'pcs';
+    const unitLabel = item.unit_label || unit;
+    if (unit !== 'pcs') parts.push(unitLabel);
+    if (item.note) parts.push(item.note);
+    return parts.join(' · ');
+}
+
+function handleCartListClick(e) {
+    const qtyBtn = e.target.closest('.qty-btn');
+    if (qtyBtn) {
+        e.stopPropagation();
+        const lineKey = qtyBtn.closest('.cart-item')?.dataset.lineKey;
+        if (lineKey) updateQty(lineKey, qtyBtn.dataset.action);
+        return;
+    }
+    const cartItem = e.target.closest('.cart-item');
+    if (cartItem?.dataset.lineKey) {
+        openModal(cartItem.dataset.lineKey);
+    }
+}
+
 function updateResetBtn() {
     const hasCart = cartItemCount > 0;
     const hasForm = !!g('customer').value
@@ -839,10 +884,17 @@ async function resetCart() {
     }
 }
 
-function loadCart() {
-    fetch('/cart-data').then(r=>r.json()).then(data => {
-        grandTotal = data.grandTotal;
-        const items = data.cart;
+async function loadCart() {
+    try {
+        const res = await fetch('/cart-data', { headers: { 'Accept': 'application/json' } });
+        const data = await parseJsonResponse(res);
+        if (!res.ok) {
+            showToast(data.message || 'Gagal memuat keranjang', 'err');
+            return;
+        }
+
+        grandTotal = data.grandTotal || 0;
+        const items = data.cart || {};
         const count = Object.keys(items).length;
         cartItemCount = count;
 
@@ -861,27 +913,53 @@ function loadCart() {
 
         let html = '';
         for (const [id, item] of cartEntries(items)) {
-            const idJs = cartIdJs(id);
-            const badge = item.custom ? '<span class="ci-badge">Manual</span>' : '';
-            html += `<div class="cart-item" onclick="openModal(${idJs})">
+            const meta = cartMetaLine(item);
+            const badge = item.is_custom ? '<span class="ci-badge">Manual</span>' : (item.from_order ? '<span class="ci-badge">Online</span>' : '');
+            html += `<div class="cart-item" data-line-key="${esc(String(id))}">
                 <div class="ci-info">
                   <div class="ci-name">${esc(item.name)}${badge}</div>
                   <div class="ci-price">${item.qty} × Rp ${Rp(item.price)}</div>
+                  ${meta ? `<div class="ci-meta">${esc(meta)}</div>` : ''}
                 </div>
-                <div class="qty-ctrl" onclick="event.stopPropagation()">
-                  <button class="qty-btn" onclick="updateQty(${idJs},'minus')">−</button>
+                <div class="qty-ctrl">
+                  <button type="button" class="qty-btn" data-action="minus" aria-label="Kurangi">−</button>
                   <span class="qty-num">${item.qty}</span>
-                  <button class="qty-btn" onclick="updateQty(${idJs},'plus')">+</button>
+                  <button type="button" class="qty-btn" data-action="plus" aria-label="Tambah">+</button>
                 </div>
-                <div class="ci-total">Rp ${Rp(item.price*item.qty)}</div>
+                <div class="ci-total">Rp ${Rp(item.price * item.qty)}</div>
             </div>`;
         }
         el.innerHTML = html;
-    });
+    } catch (e) {
+        showToast('Gagal memuat keranjang', 'err');
+        console.error(e);
+    }
 }
 
-function updateQty(id, action) {
-    fetch(`/cart/update/${encodeURIComponent(id)}/${action}`).then(r=>r.json()).then(() => loadCart());
+async function updateQty(id, action) {
+    if (!id) {
+        showToast('Item keranjang tidak valid', 'err');
+        return;
+    }
+    try {
+        const res = await fetch(`/cart/update/${encodeURIComponent(id)}/${action}`, {
+            headers: { 'Accept': 'application/json' },
+        });
+        const data = await parseJsonResponse(res);
+        if (!res.ok || data.status === 'error') {
+            showToast(data.message || 'Gagal memperbarui qty', 'err');
+            return;
+        }
+        grandTotal = data.grandTotal || 0;
+        cartItemCount = Object.keys(data.cart || {}).length;
+        g('grand-total').textContent = Rp(grandTotal);
+        calcChange();
+        updateResetBtn();
+        await loadCart();
+    } catch (e) {
+        showToast('Gagal memperbarui qty', 'err');
+        console.error(e);
+    }
 }
 
 // ── CHANGE CALC ────────────────────────────────────────
@@ -973,62 +1051,103 @@ async function checkout() {
 }
 
 // ── MODAL EDIT ─────────────────────────────────────────
+function applyModalPriceFromUnit(unit) {
+    if (!currentItem || currentItem.is_custom) return;
+    const pcs = currentItem.harga_pcs || 0;
+    const dus = currentItem.harga_dus || pcs;
+    if (unit === 'dus') {
+        g('modal-price').value = dus;
+        g('opt-pcs').classList.remove('sel');
+        g('opt-dus').classList.add('sel');
+    } else {
+        g('modal-price').value = pcs;
+        g('opt-pcs').classList.add('sel');
+        g('opt-dus').classList.remove('sel');
+    }
+}
+
 function openModal(id) {
-    fetch('/cart-data').then(r=>r.json()).then(data => {
-        const item = data.cart[id];
-        if (!item) return;
-        currentItem = item;
+    fetch('/cart-data', { headers: { 'Accept': 'application/json' } })
+        .then(r => parseJsonResponse(r).then(data => ({ res: r, data })))
+        .then(({ res, data }) => {
+            if (!res.ok) {
+                showToast(data.message || 'Gagal memuat item', 'err');
+                return;
+            }
+            const item = data.cart[id];
+            if (!item) {
+                showToast('Item tidak ditemukan', 'err');
+                return;
+            }
 
-        const isCustom = !!item.custom || String(id).startsWith('custom_');
+            currentItem = item;
+            currentItemId = id;
 
-        g('modal-id').value = id;
-        g('modal-name-inp').value = item.name;
-        g('modal-qty').value = item.qty;
-        g('modal-price').value = item.price;
-        g('modal-price-opts').style.display = isCustom ? 'none' : 'grid';
-        g('modal-sub').textContent = isCustom ? 'Produk manual — edit nama, qty & harga' : 'Edit nama, qty & harga';
+            const isCustom = !!item.is_custom;
 
-        if (!isCustom) {
-            g('opt-pcs-val').textContent = 'Rp '+Rp(item.harga_pcs||0);
-            g('opt-dus-val').textContent = 'Rp '+Rp(item.harga_dus||0);
+            g('modal-id').value = id;
+            g('modal-name-inp').value = item.name;
+            g('modal-qty').value = item.qty;
+            g('modal-price').value = item.price;
+            g('modal-unit').value = item.unit || 'pcs';
+            g('modal-note').value = item.note || '';
+            g('modal-price-opts').style.display = isCustom ? 'none' : 'grid';
+            g('modal-sub').textContent = isCustom
+                ? 'Produk manual — edit nama, satuan, catatan, qty & harga'
+                : 'Edit nama, satuan, catatan, qty & harga';
 
-            const isPcs = item.price == item.harga_pcs;
-            g('opt-pcs').classList.toggle('sel', isPcs);
-            g('opt-dus').classList.toggle('sel', !isPcs);
+            if (!isCustom) {
+                g('opt-pcs-val').textContent = 'Rp ' + Rp(item.harga_pcs || 0);
+                g('opt-dus-val').textContent = 'Rp ' + Rp(item.harga_dus || 0);
+                applyModalPriceFromUnit(item.unit || 'pcs');
+            }
 
-            g('opt-pcs').onclick = () => { g('modal-price').value = currentItem.harga_pcs||0; g('opt-pcs').classList.add('sel'); g('opt-dus').classList.remove('sel'); };
-            g('opt-dus').onclick = () => { g('modal-price').value = currentItem.harga_dus||0; g('opt-dus').classList.add('sel'); g('opt-pcs').classList.remove('sel'); };
-        }
-
-        g('modal-ov').classList.add('on');
-    });
+            g('modal-ov').classList.add('on');
+        })
+        .catch(() => showToast('Gagal memuat item', 'err'));
 }
 function closeModal() { g('modal-ov').classList.remove('on'); }
 function onQtyChange() {
-    if (currentItem.custom || String(g('modal-id').value).startsWith('custom_')) return;
-    const qty = parseInt(g('modal-qty').value)||1;
-    if (qty >= 12) { g('modal-price').value = currentItem.harga_dus||0; g('opt-dus').classList.add('sel'); g('opt-pcs').classList.remove('sel'); }
-    else           { g('modal-price').value = currentItem.harga_pcs||0; g('opt-pcs').classList.add('sel'); g('opt-dus').classList.remove('sel'); }
+    if (currentItem.is_custom) return;
+    const qty = parseInt(g('modal-qty').value) || 1;
+    if (qty >= 12) applyModalPriceFromUnit('dus');
+    else applyModalPriceFromUnit(g('modal-unit').value || 'pcs');
+}
+function onModalUnitChange() {
+    applyModalPriceFromUnit(g('modal-unit').value || 'pcs');
 }
 function selectOpt(type) {
-    g('opt-pcs').classList.toggle('sel', type==='pcs');
-    g('opt-dus').classList.toggle('sel', type==='dus');
-    g('modal-price').value = type==='pcs' ? (currentItem.harga_pcs||0) : (currentItem.harga_dus||0);
+    g('modal-unit').value = type;
+    applyModalPriceFromUnit(type);
 }
-function saveModal() {
+async function saveModal() {
     const name = g('modal-name-inp').value.trim();
     if (!name) { showToast('Nama produk wajib diisi','err'); return; }
 
-    fetch('/cart/update-manual', {
-        method:'POST',
-        headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF,'Accept':'application/json'},
-        body: JSON.stringify({
-            id: g('modal-id').value,
-            name,
-            qty: g('modal-qty').value,
-            price: g('modal-price').value,
-        }),
-    }).then(()=>{ closeModal(); loadCart(); showToast('Keranjang diperbarui','ok'); });
+    try {
+        const res = await fetch('/cart/update-manual', {
+            method:'POST',
+            headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF,'Accept':'application/json'},
+            body: JSON.stringify({
+                id: g('modal-id').value,
+                name,
+                qty: g('modal-qty').value,
+                price: g('modal-price').value,
+                unit: g('modal-unit').value,
+                note: g('modal-note').value,
+            }),
+        });
+        const data = await parseJsonResponse(res);
+        if (!res.ok || data.status === 'error') {
+            showToast(data.message || 'Gagal menyimpan', 'err');
+            return;
+        }
+        closeModal();
+        await loadCart();
+        showToast('Keranjang diperbarui','ok');
+    } catch (e) {
+        showToast('Gagal menyimpan perubahan', 'err');
+    }
 }
 
 // ── MODAL PRODUK MANUAL ────────────────────────────────

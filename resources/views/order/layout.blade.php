@@ -101,6 +101,13 @@ a{color:inherit;text-decoration:none}
 .note-input:focus{outline:none;border-color:var(--go)}
 .cart-drawer-line-info{flex:1;min-width:0}
 .cart-drawer-line-meta{display:block;font-size:11px;color:var(--tx2);margin-top:3px;line-height:1.35}
+.cart-drawer-line-edit{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+.cart-drawer-line-edit select,
+.cart-drawer-line-edit input{
+  width:100%;padding:7px 9px;background:var(--bg4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-size:12px;font-family:var(--fn);
+}
+.cart-drawer-line-edit select:focus,
+.cart-drawer-line-edit input:focus{outline:none;border-color:var(--go)}
 .item-note{display:block;font-size:11px;color:var(--tx2);margin-top:2px}
 .cart-item{margin-bottom:12px;padding:14px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rr)}
 .cart-item-name{font-weight:500;margin-bottom:4px}

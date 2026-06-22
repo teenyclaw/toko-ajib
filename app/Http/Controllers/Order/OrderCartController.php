@@ -69,6 +69,9 @@ class OrderCartController extends Controller
             'note' => 'nullable|string|max:500',
         ]);
 
+        $cart    = OrderSessionCart::get();
+        $lineKey = OrderUnits::resolveLineKey($lineKey, $cart[$lineKey] ?? []);
+
         try {
             $this->orderService->updateCartItem(
                 $lineKey,
@@ -93,6 +96,9 @@ class OrderCartController extends Controller
 
     public function remove(string $lineKey, Request $request)
     {
+        $cart    = OrderSessionCart::get();
+        $lineKey = OrderUnits::resolveLineKey($lineKey, $cart[$lineKey] ?? []);
+
         $this->orderService->removeFromCart($lineKey);
 
         if ($request->expectsJson()) {
@@ -122,6 +128,7 @@ class OrderCartController extends Controller
 
         return [
             'items'     => $items,
+            'units'     => OrderUnits::unitOptions(),
             'total_qty' => OrderSessionCart::totalQty(),
             'count'     => count($cart),
         ];

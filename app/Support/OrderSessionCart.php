@@ -8,7 +8,14 @@ class OrderSessionCart
 
     public static function get(): array
     {
-        return session()->get(self::SESSION_KEY, []);
+        $cart     = session()->get(self::SESSION_KEY, []);
+        $migrated = self::migrateCartKeys($cart);
+
+        if ($migrated !== $cart) {
+            session()->put(self::SESSION_KEY, CartOrder::ensure($migrated));
+        }
+
+        return $migrated;
     }
 
     public static function put(array $cart): void
@@ -29,5 +36,33 @@ class OrderSessionCart
     public static function totalQty(): int
     {
         return (int) collect(self::get())->sum('qty');
+    }
+
+    private static function migrateCartKeys(array $cart): array
+    {
+        if ($cart === []) {
+            return [];
+        }
+
+        $migrated = [];
+
+        foreach ($cart as $key => $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $newKey = OrderUnits::resolveLineKey((string) $key, $item);
+
+            if (isset($migrated[$newKey])) {
+                $migrated[$newKey]['qty'] += (int) ($item['qty'] ?? 0);
+                if (!empty($item['note'])) {
+                    $migrated[$newKey]['note'] = $item['note'];
+                }
+            } else {
+                $migrated[$newKey] = $item;
+            }
+        }
+
+        return CartOrder::ensure($migrated);
     }
 }
