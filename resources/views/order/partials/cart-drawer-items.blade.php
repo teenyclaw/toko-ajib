@@ -8,7 +8,11 @@
     @foreach($cart as $id => $item)
       <li class="cart-drawer-line" data-id="{{ $id }}">
         <div class="cart-drawer-line-main">
-          <span class="cart-drawer-line-name">{{ $item['name'] }}</span>
+          <div class="cart-drawer-line-info">
+            <span class="cart-drawer-line-name">{{ $item['name'] }}</span>
+            @php $unit = $item['unit'] ?? 'pcs'; @endphp
+            <span class="cart-drawer-line-meta">{{ \App\Support\OrderUnits::label($unit) }}@if(!empty($item['note'])) — {{ $item['note'] }}@endif</span>
+          </div>
           <span class="cart-drawer-line-qty">x{{ $item['qty'] }}</span>
         </div>
         <div class="cart-drawer-line-actions">

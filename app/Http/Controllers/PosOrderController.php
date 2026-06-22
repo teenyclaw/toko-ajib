@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Services\OrderService;
+use App\Support\OrderUnits;
 use Illuminate\Http\Request;
 
 class PosOrderController extends Controller
@@ -73,6 +74,8 @@ class PosOrderController extends Controller
                 'product_name' => $item->product_name,
                 'qty'          => $item->qty,
                 'unit'         => $item->unit,
+                'unit_label'   => OrderUnits::label($item->unit),
+                'note'         => $item->note,
                 'stock'        => $item->product?->stock,
             ]),
         ]);

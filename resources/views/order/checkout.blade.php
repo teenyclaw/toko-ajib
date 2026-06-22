@@ -8,8 +8,15 @@
 
 <div class="summary" style="margin-top:0">
   @foreach($cart as $item)
+    @php $unit = $item['unit'] ?? 'pcs'; @endphp
     <div class="item-row">
-      <span>{{ $item['name'] }} × {{ $item['qty'] }}</span>
+      <span>
+        {{ $item['name'] }}
+        @if(!empty($item['note']))
+          <span class="item-note">({{ $item['note'] }})</span>
+        @endif
+      </span>
+      <span>{{ $item['qty'] }} {{ \App\Support\OrderUnits::label($unit) }}</span>
     </div>
   @endforeach
 </div>

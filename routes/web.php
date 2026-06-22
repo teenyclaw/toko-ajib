@@ -26,8 +26,12 @@ Route::prefix('order')->name('order.')->group(function () {
     Route::get('/cart', [OrderCartController::class, 'index'])->name('cart');
     Route::get('/cart/data', [OrderCartController::class, 'data'])->name('cart.data');
     Route::post('/cart/add', [OrderCartController::class, 'add'])->name('cart.add');
-    Route::patch('/cart/{productId}', [OrderCartController::class, 'update'])->name('cart.update');
-    Route::delete('/cart/{productId}', [OrderCartController::class, 'remove'])->name('cart.remove');
+    Route::patch('/cart/{lineKey}', [OrderCartController::class, 'update'])
+        ->where('lineKey', '[0-9]+:(pcs|dus|gantung|strip|pak)')
+        ->name('cart.update');
+    Route::delete('/cart/{lineKey}', [OrderCartController::class, 'remove'])
+        ->where('lineKey', '[0-9]+:(pcs|dus|gantung|strip|pak)')
+        ->name('cart.remove');
     Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
     Route::get('/thanks/{orderNumber}', [CheckoutController::class, 'thanks'])->name('thanks');

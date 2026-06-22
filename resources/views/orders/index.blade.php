@@ -181,8 +181,8 @@ async function openDetail(id) {
     ${o.customer_address ? `<div class="dv-row"><span>Alamat</span><strong>${esc(o.customer_address)}</strong></div>` : ''}
     ${o.notes ? `<div class="dv-row"><span>Catatan</span><strong>${esc(o.notes)}</strong></div>` : ''}
     <div class="dv-row"><span>Status</span><span class="st st-${o.status}">${esc(o.status)}</span></div>
-    <table class="item-tbl"><thead><tr><th>Produk</th><th>Qty</th><th>Stok</th></tr></thead><tbody>
-    ${(o.items||[]).map(i => `<tr><td>${esc(i.product_name)}</td><td>${i.qty} ${esc(i.unit)}</td><td>${i.stock ?? '—'}</td></tr>`).join('')}
+    <table class="item-tbl"><thead><tr><th>Produk</th><th>Qty</th><th>Catatan</th><th>Stok</th></tr></thead><tbody>
+    ${(o.items||[]).map(i => `<tr><td>${esc(i.product_name)}</td><td>${i.qty} ${esc(i.unit_label || i.unit)}</td><td>${i.note ? esc(i.note) : '—'}</td><td>${i.stock ?? '—'}</td></tr>`).join('')}
     </tbody></table>`;
   document.getElementById('p-body').innerHTML = html;
 

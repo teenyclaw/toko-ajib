@@ -10,6 +10,7 @@ use App\Models\StoreSetting;
 use App\Models\Sale;
 use App\Support\CartOrder;
 use App\Support\OrderSessionCart;
+use App\Support\OrderUnits;
 use App\Support\PhoneNormalizer;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -112,7 +113,11 @@ class OrderService
         $lines[] = 'Item:';
 
         foreach ($order->items as $item) {
-            $lines[] = '• ' . $item->product_name . ' × ' . $item->qty . ' ' . $item->unit;
+            $line = '• ' . $item->product_name . ' × ' . $item->qty . ' ' . OrderUnits::label($item->unit);
+            if ($item->note) {
+                $line .= ' (' . $item->note . ')';
+            }
+            $lines[] = $line;
         }
 
         return 'https://wa.me/' . $phone . '?text=' . rawurlencode(implode("\n", $lines));
@@ -147,6 +152,7 @@ class OrderService
                     'product_name' => $item['name'],
                     'qty'          => $item['qty'],
                     'unit'         => $item['unit'] ?? 'pcs',
+                    'note'         => $item['note'] ?? null,
                     'price'        => null,
                     'sort_order'   => $item['order'] ?? $sort,
                 ]);
@@ -159,7 +165,7 @@ class OrderService
         });
     }
 
-    public function addProductToCart(Product $product, int $qty = 1, string $unit = 'pcs'): array
+    public function addProductToCart(Product $product, int $qty = 1, string $unit = 'pcs', ?string $note = null): array
     {
         if (!$product->is_orderable) {
             throw new \InvalidArgumentException('Produk tidak tersedia untuk pemesanan online.');
@@ -169,8 +175,14 @@ class OrderService
             throw new \InvalidArgumentException('Stok produk habis.');
         }
 
+        $unit = OrderUnits::normalize($unit);
+        $note = $note !== null ? trim($note) : null;
+        if ($note === '') {
+            $note = null;
+        }
+
         $cart = OrderSessionCart::get();
-        $id   = (string) $product->id;
+        $id   = OrderUnits::cartLineKey($product->id, $unit);
 
         if (isset($cart[$id])) {
             $newQty = $cart[$id]['qty'] + $qty;
@@ -178,6 +190,9 @@ class OrderService
                 throw new \InvalidArgumentException('Qty melebihi stok tersedia (' . $product->stock . ').');
             }
             $cart[$id]['qty'] = $newQty;
+            if ($note !== null) {
+                $cart[$id]['note'] = $note;
+            }
         } else {
             if ($qty > $product->stock) {
                 throw new \InvalidArgumentException('Qty melebihi stok tersedia (' . $product->stock . ').');
@@ -187,6 +202,7 @@ class OrderService
                 'name'       => $product->name,
                 'qty'        => $qty,
                 'unit'       => $unit,
+                'note'       => $note,
                 'order'      => CartOrder::next($cart),
                 'stock'      => $product->stock,
             ];
@@ -197,29 +213,58 @@ class OrderService
         return $cart;
     }
 
-    public function updateCartQty(string $productId, int $qty): array
+    public function updateCartItem(string $lineKey, int $qty, ?string $unit = null, ?string $note = null): array
     {
         $cart = OrderSessionCart::get();
 
-        if (!isset($cart[$productId])) {
+        if (!isset($cart[$lineKey])) {
             return $cart;
         }
 
-        $product = Product::find($productId);
+        $item    = $cart[$lineKey];
+        $product = Product::find($item['product_id']);
         if (!$product) {
-            unset($cart[$productId]);
+            unset($cart[$lineKey]);
             OrderSessionCart::put($cart);
+
             return $cart;
         }
 
         if ($qty <= 0) {
-            unset($cart[$productId]);
-        } else {
-            if ($qty > $product->stock) {
-                throw new \InvalidArgumentException('Qty melebihi stok tersedia (' . $product->stock . ').');
+            unset($cart[$lineKey]);
+            OrderSessionCart::put($cart);
+
+            return $cart;
+        }
+
+        if ($qty > $product->stock) {
+            throw new \InvalidArgumentException('Qty melebihi stok tersedia (' . $product->stock . ').');
+        }
+
+        $newUnit = $unit !== null ? OrderUnits::normalize($unit) : ($item['unit'] ?? 'pcs');
+        $newNote = $note !== null ? trim($note) : ($item['note'] ?? null);
+        if ($newNote === '') {
+            $newNote = null;
+        }
+
+        unset($cart[$lineKey]);
+
+        $newKey = OrderUnits::cartLineKey($product->id, $newUnit);
+        if (isset($cart[$newKey]) && $newKey !== $lineKey) {
+            $cart[$newKey]['qty'] += $qty;
+            if ($newNote !== null) {
+                $cart[$newKey]['note'] = $newNote;
             }
-            $cart[$productId]['qty']   = $qty;
-            $cart[$productId]['stock'] = $product->stock;
+        } else {
+            $cart[$newKey] = [
+                'product_id' => $product->id,
+                'name'       => $product->name,
+                'qty'        => $qty,
+                'unit'       => $newUnit,
+                'note'       => $newNote,
+                'order'      => $item['order'] ?? CartOrder::next($cart),
+                'stock'      => $product->stock,
+            ];
         }
 
         OrderSessionCart::put($cart);
@@ -227,10 +272,15 @@ class OrderService
         return $cart;
     }
 
-    public function removeFromCart(string $productId): array
+    public function updateCartQty(string $lineKey, int $qty): array
+    {
+        return $this->updateCartItem($lineKey, $qty);
+    }
+
+    public function removeFromCart(string $lineKey): array
     {
         $cart = OrderSessionCart::get();
-        unset($cart[$productId]);
+        unset($cart[$lineKey]);
         OrderSessionCart::put($cart);
 
         return $cart;
@@ -308,18 +358,31 @@ class OrderService
                 );
             }
 
-            $price = $item->unit === 'dus'
-                ? ($product->harga_jual_dus ?? $product->harga_jual_pcs)
-                : $product->harga_jual_pcs;
+            $price       = $this->posPriceForUnit($product, $item->unit);
+            $displayName = $this->formatPosItemName($item);
+            $cartKey     = (string) $product->id;
 
-            $cart[$product->id] = [
-                'name'      => $item->product_name,
-                'price'     => (int) $price,
-                'qty'       => $item->qty,
-                'order'     => $item->sort_order,
-                'harga_pcs' => $product->harga_jual_pcs,
-                'harga_dus' => $product->harga_jual_dus ?? $product->harga_jual_pcs,
-            ];
+            if (isset($cart[$cartKey])) {
+                $cartKey = 'order_' . $item->id;
+                $cart[$cartKey] = [
+                    'name'      => $displayName,
+                    'price'     => (int) $price,
+                    'qty'       => $item->qty,
+                    'order'     => $item->sort_order,
+                    'harga_pcs' => $product->harga_jual_pcs,
+                    'harga_dus' => $product->harga_jual_dus ?? $product->harga_jual_pcs,
+                    'custom'    => true,
+                ];
+            } else {
+                $cart[$cartKey] = [
+                    'name'      => $displayName,
+                    'price'     => (int) $price,
+                    'qty'       => $item->qty,
+                    'order'     => $item->sort_order,
+                    'harga_pcs' => $product->harga_jual_pcs,
+                    'harga_dus' => $product->harga_jual_dus ?? $product->harga_jual_pcs,
+                ];
+            }
 
             $item->update(['price' => $price]);
         }
@@ -455,5 +518,27 @@ class OrderService
         }
 
         return 'https://wa.me/' . $phone . '?text=' . rawurlencode(implode("\n", $lines));
+    }
+
+    private function posPriceForUnit(Product $product, string $unit): int
+    {
+        return $unit === 'dus'
+            ? (int) ($product->harga_jual_dus ?? $product->harga_jual_pcs)
+            : (int) $product->harga_jual_pcs;
+    }
+
+    private function formatPosItemName(OrderItem $item): string
+    {
+        $name = $item->product_name;
+
+        if ($item->unit !== 'pcs') {
+            $name .= ' [' . OrderUnits::label($item->unit) . ']';
+        }
+
+        if ($item->note) {
+            $name .= ' — ' . $item->note;
+        }
+
+        return $name;
     }
 }

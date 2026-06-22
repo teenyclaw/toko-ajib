@@ -65,8 +65,18 @@
             <form method="POST" action="{{ route('order.cart.add') }}" class="qty-row add-to-cart-form">
               @csrf
               <input type="hidden" name="product_id" value="{{ $product->id }}">
-              <input type="number" name="qty" value="1" min="1" max="{{ $stock }}" aria-label="Jumlah">
-              <button type="submit" class="btn btn-primary btn-sm">+ Keranjang</button>
+              <div class="product-add-fields">
+                <div class="qty-row">
+                  <input type="number" name="qty" value="1" min="1" max="{{ $stock }}" aria-label="Jumlah">
+                  <select name="unit" aria-label="Satuan">
+                    @foreach(\App\Support\OrderUnits::all() as $unit)
+                      <option value="{{ $unit }}">{{ \App\Support\OrderUnits::label($unit) }}</option>
+                    @endforeach
+                  </select>
+                  <button type="submit" class="btn btn-primary btn-sm">+ Keranjang</button>
+                </div>
+                <input type="text" name="note" class="note-input" placeholder="Catatan item (opsional)" maxlength="500" aria-label="Catatan item">
+              </div>
             </form>
           @endif
         </div>

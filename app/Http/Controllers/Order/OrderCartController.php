@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Services\OrderService;
 use App\Support\OrderSessionCart;
+use App\Support\OrderUnits;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class OrderCartController extends Controller
 {
@@ -29,7 +31,8 @@ class OrderCartController extends Controller
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'qty'        => 'integer|min:1|max:9999',
-            'unit'       => 'in:pcs,dus',
+            'unit'       => ['nullable', Rule::in(OrderUnits::all())],
+            'note'       => 'nullable|string|max:500',
         ]);
 
         $product = Product::findOrFail($request->product_id);
@@ -38,7 +41,8 @@ class OrderCartController extends Controller
             $this->orderService->addProductToCart(
                 $product,
                 (int) ($request->qty ?? 1),
-                $request->unit ?? 'pcs'
+                $request->unit ?? 'pcs',
+                $request->note
             );
         } catch (\InvalidArgumentException $e) {
             if ($request->expectsJson()) {
@@ -57,14 +61,21 @@ class OrderCartController extends Controller
         return back()->with('success', $product->name . ' ditambahkan ke keranjang.');
     }
 
-    public function update(Request $request, string $productId)
+    public function update(Request $request, string $lineKey)
     {
         $request->validate([
-            'qty' => 'required|integer|min:0|max:9999',
+            'qty'  => 'required|integer|min:0|max:9999',
+            'unit' => ['nullable', Rule::in(OrderUnits::all())],
+            'note' => 'nullable|string|max:500',
         ]);
 
         try {
-            $this->orderService->updateCartQty($productId, (int) $request->qty);
+            $this->orderService->updateCartItem(
+                $lineKey,
+                (int) $request->qty,
+                $request->unit,
+                $request->has('note') ? $request->note : null
+            );
         } catch (\InvalidArgumentException $e) {
             if ($request->expectsJson()) {
                 return response()->json(['status' => 'error', 'message' => $e->getMessage()], 422);
@@ -80,9 +91,9 @@ class OrderCartController extends Controller
         return redirect()->route('order.catalog', ['cart' => 'open'])->with('success', 'Keranjang diperbarui.');
     }
 
-    public function remove(string $productId, Request $request)
+    public function remove(string $lineKey, Request $request)
     {
-        $this->orderService->removeFromCart($productId);
+        $this->orderService->removeFromCart($lineKey);
 
         if ($request->expectsJson()) {
             return response()->json(array_merge(['status' => 'success'], $this->cartPayload()));
@@ -97,12 +108,15 @@ class OrderCartController extends Controller
         $items = [];
 
         foreach ($cart as $id => $item) {
+            $unit = $item['unit'] ?? 'pcs';
             $items[] = [
-                'id'    => (string) $id,
-                'name'  => $item['name'],
-                'qty'   => (int) $item['qty'],
-                'unit'  => $item['unit'] ?? 'pcs',
-                'stock' => (int) ($item['stock'] ?? 9999),
+                'id'         => (string) $id,
+                'name'       => $item['name'],
+                'qty'        => (int) $item['qty'],
+                'unit'       => $unit,
+                'unit_label' => OrderUnits::label($unit),
+                'note'       => $item['note'] ?? null,
+                'stock'      => (int) ($item['stock'] ?? 9999),
             ];
         }
 

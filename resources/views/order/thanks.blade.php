@@ -31,8 +31,13 @@
   <div class="sec-label" style="font-size:10px;color:var(--tx3);letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px">Detail Pesanan</div>
   @foreach($order->items as $item)
     <div class="item-row">
-      <span>{{ $item->product_name }}</span>
-      <span>{{ $item->qty }} {{ $item->unit }}</span>
+      <span>
+        {{ $item->product_name }}
+        @if($item->note)
+          <span class="item-note">({{ $item->note }})</span>
+        @endif
+      </span>
+      <span>{{ $item->qty }} {{ \App\Support\OrderUnits::label($item->unit) }}</span>
     </div>
   @endforeach
 </div>

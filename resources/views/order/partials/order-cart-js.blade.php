@@ -85,7 +85,10 @@ window.OrderCart = (function () {
     body.innerHTML = '<ul class="cart-drawer-list">' + data.items.map(item => `
       <li class="cart-drawer-line" data-id="${esc(item.id)}">
         <div class="cart-drawer-line-main">
-          <span class="cart-drawer-line-name">${esc(item.name)}</span>
+          <div class="cart-drawer-line-info">
+            <span class="cart-drawer-line-name">${esc(item.name)}</span>
+            <span class="cart-drawer-line-meta">${esc(item.unit_label || item.unit || 'Pcs')}${item.note ? ' — ' + esc(item.note) : ''}</span>
+          </div>
           <span class="cart-drawer-line-qty">x${item.qty}</span>
         </div>
         <div class="cart-drawer-line-actions">
@@ -101,7 +104,7 @@ window.OrderCart = (function () {
       foot.innerHTML = `
         <div class="cart-drawer-summary">
           <span>Total item</span>
-          <strong>${data.total_qty} pcs</strong>
+          <strong>${data.total_qty} item</strong>
         </div>
         <a href="${esc(document.getElementById('checkout-url')?.value || '/order/checkout')}" class="btn btn-primary">Lanjut Checkout</a>
       `;
@@ -117,7 +120,7 @@ window.OrderCart = (function () {
     return data;
   }
 
-  async function addProduct(productId, qty) {
+  async function addProduct(productId, qty, unit, note) {
     const res = await fetch(document.getElementById('cart-add-url')?.value || '/order/cart/add', {
       method: 'POST',
       headers: {
@@ -125,7 +128,12 @@ window.OrderCart = (function () {
         'X-CSRF-TOKEN': CSRF,
         'Accept': 'application/json',
       },
-      body: JSON.stringify({ product_id: productId, qty: qty }),
+      body: JSON.stringify({
+        product_id: productId,
+        qty: qty,
+        unit: unit || 'pcs',
+        note: note || null,
+      }),
     });
     const data = await res.json();
     if (!res.ok || data.status === 'error') {
@@ -138,9 +146,9 @@ window.OrderCart = (function () {
     return true;
   }
 
-  async function updateQty(productId, qty) {
+  async function updateQty(lineKey, qty) {
     const base = document.getElementById('cart-update-url')?.value || '/order/cart/';
-    const res = await fetch(base + encodeURIComponent(productId), {
+    const res = await fetch(base + encodeURIComponent(lineKey), {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -157,9 +165,9 @@ window.OrderCart = (function () {
     renderItems(data);
   }
 
-  async function removeItem(productId) {
+  async function removeItem(lineKey) {
     const base = document.getElementById('cart-update-url')?.value || '/order/cart/';
-    const res = await fetch(base + encodeURIComponent(productId), {
+    const res = await fetch(base + encodeURIComponent(lineKey), {
       method: 'DELETE',
       headers: {
         'X-CSRF-TOKEN': CSRF,
@@ -179,9 +187,11 @@ window.OrderCart = (function () {
       e.preventDefault();
       const productId = form.querySelector('[name=product_id]')?.value;
       const qty = parseInt(form.querySelector('[name=qty]')?.value || '1', 10);
+      const unit = form.querySelector('[name=unit]')?.value || 'pcs';
+      const note = form.querySelector('[name=note]')?.value?.trim() || '';
       const btn = form.querySelector('button[type=submit]');
       if (btn) btn.disabled = true;
-      await addProduct(productId, qty);
+      await addProduct(productId, qty, unit, note);
       if (btn) btn.disabled = false;
     });
   });
