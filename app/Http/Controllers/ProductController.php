@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Category;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
@@ -166,6 +167,85 @@ class ProductController extends Controller
             'margin_pcs'      => $p->margin_pcs      ?? 15,
             'margin_pcs_type' => $p->margin_pcs_type ?? 'percent',
         ]);
+    }
+
+    public function bulkModalPage()
+    {
+        $categories = Category::orderBy('name')->get();
+
+        return view('products.bulk-modal', compact('categories'));
+    }
+
+    public function bulkModalSearch(Request $request)
+    {
+        $search     = trim((string) $request->get('q', ''));
+        $categoryId = $request->get('category_id');
+
+        $products = Product::with('category')
+            ->when($search !== '', fn ($q) => $q->where('name', 'like', "%{$search}%"))
+            ->when($categoryId, fn ($q) => $q->where('category_id', $categoryId))
+            ->orderBy('name')
+            ->limit(50)
+            ->get()
+            ->map(fn (Product $p) => $this->productToBulkJson($p));
+
+        return response()->json(['products' => $products]);
+    }
+
+    public function bulkUpdateModal(Request $request)
+    {
+        $request->validate([
+            'items'                   => 'required|array|min:1',
+            'items.*.id'              => 'required|exists:products,id',
+            'items.*.harga_beli_dus'  => 'required|numeric|min:1',
+        ]);
+
+        $updated = DB::transaction(function () use ($request) {
+            $results = [];
+
+            foreach ($request->items as $item) {
+                $product = Product::findOrFail($item['id']);
+                $data    = $this->calcPrices(array_merge($product->toArray(), [
+                    'harga_beli_dus' => $item['harga_beli_dus'],
+                ]));
+                $product->update($data);
+                $fresh = $product->fresh();
+
+                $results[] = [
+                    'id'               => $fresh->id,
+                    'name'             => $fresh->name,
+                    'harga_beli_dus'   => $fresh->harga_beli_dus,
+                    'harga_jual_dus'   => $fresh->harga_jual_dus,
+                    'harga_jual_pcs'   => $fresh->harga_jual_pcs,
+                ];
+            }
+
+            return $results;
+        });
+
+        return response()->json([
+            'status'  => 'success',
+            'count'   => count($updated),
+            'items'   => $updated,
+            'message' => count($updated) . ' produk berhasil diperbarui',
+        ]);
+    }
+
+    private function productToBulkJson(Product $p): array
+    {
+        return [
+            'id'               => $p->id,
+            'name'             => $p->name,
+            'category_name'    => $p->category?->name ?? '—',
+            'harga_beli_dus'   => (int) $p->harga_beli_dus,
+            'harga_jual_dus'   => (int) $p->harga_jual_dus,
+            'harga_jual_pcs'   => (int) $p->harga_jual_pcs,
+            'qty_per_dus'      => (int) $p->qty_per_dus,
+            'margin_dus'       => (float) $p->margin_dus,
+            'margin_dus_type'  => $p->margin_dus_type ?? 'percent',
+            'margin_pcs'       => (float) $p->margin_pcs,
+            'margin_pcs_type'  => $p->margin_pcs_type ?? 'percent',
+        ];
     }
 
     private function calcPrices(array $d): array

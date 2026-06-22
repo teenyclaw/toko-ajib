@@ -90,6 +90,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::post('/settings/users/{user}/delete', [UserManagementController::class, 'destroy'])->name('settings.users.destroy');
 
     Route::get('/products',                      [ProductController::class, 'index']);
+    Route::get('/products/bulk-modal',           [ProductController::class, 'bulkModalPage'])->name('products.bulk-modal');
+    Route::get('/products/bulk-modal/search',    [ProductController::class, 'bulkModalSearch'])->name('products.bulk-modal.search');
+    Route::post('/products/bulk-update-modal',   [ProductController::class, 'bulkUpdateModal'])->name('products.bulk-update-modal');
     Route::post('/products',                     [ProductController::class, 'store']);
     Route::delete('/products/{id}',              [ProductController::class, 'destroy']);
     Route::post('/products/{id}/update-modal',   [ProductController::class, 'updateModal']);
