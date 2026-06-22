@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
+use App\Http\Controllers\PriceIncreaseController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\SaleController;
@@ -93,6 +94,8 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/products/bulk-modal',           [ProductController::class, 'bulkModalPage'])->name('products.bulk-modal');
     Route::get('/products/bulk-modal/search',    [ProductController::class, 'bulkModalSearch'])->name('products.bulk-modal.search');
     Route::post('/products/bulk-update-modal',   [ProductController::class, 'bulkUpdateModal'])->name('products.bulk-update-modal');
+    Route::get('/products/price-increase',        [PriceIncreaseController::class, 'index'])->name('products.price-increase');
+    Route::post('/products/price-increase/print', [PriceIncreaseController::class, 'print'])->name('products.price-increase.print');
     Route::post('/products',                     [ProductController::class, 'store']);
     Route::delete('/products/{id}',              [ProductController::class, 'destroy']);
     Route::post('/products/{id}/update-modal',   [ProductController::class, 'updateModal']);
