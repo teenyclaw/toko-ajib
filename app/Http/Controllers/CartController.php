@@ -347,13 +347,15 @@ class CartController extends Controller
         $product = Product::findOrFail($request->product_id);
         $cart    = session()->get('cart', []);
         $price   = $request->price ?? $product->harga_jual_pcs;
+        $qty     = max(1, (int) ($request->qty ?? 1));
         if (isset($cart[$product->id])) {
-            $cart[$product->id]['qty']++;
+            $cart[$product->id]['qty'] += $qty;
+            $cart[$product->id]['order'] = CartOrder::next($cart);
         } else {
             $cart[$product->id] = [
                 'name'       => $product->name,
                 'price'      => (int) $price,
-                'qty'        => 1,
+                'qty'        => $qty,
                 'unit'       => 'pcs',
                 'product_id' => $product->id,
                 'order'      => CartOrder::next($cart),

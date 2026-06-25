@@ -33,7 +33,7 @@ class CartOrder
 
     public static function sort(array $cart): array
     {
-        uasort($cart, fn($a, $b) => ($a['order'] ?? 0) <=> ($b['order'] ?? 0));
+        uasort($cart, fn ($a, $b) => ($b['order'] ?? 0) <=> ($a['order'] ?? 0));
 
         return $cart;
     }

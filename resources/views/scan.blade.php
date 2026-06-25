@@ -69,7 +69,7 @@ function beep() {
 }
 
 function cartEntries(cart) {
-    return Object.entries(cart).sort((a, b) => (a[1].order ?? 0) - (b[1].order ?? 0));
+    return Object.entries(cart).sort((a, b) => (b[1].order ?? 0) - (a[1].order ?? 0));
 }
 
 function renderCart(cart, grandTotal) {

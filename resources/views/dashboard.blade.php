@@ -101,14 +101,15 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:14px;l
 .select2-container--default .select2-results__option{color:var(--tx2)!important;font-family:var(--fn)!important;font-size:13px!important;padding:8px 12px!important}
 .select2-container--default .select2-results__option--highlighted{background:var(--bg4)!important;color:var(--tx)!important}
 .select2-container--default .select2-search--dropdown .select2-search__field{background:var(--bg4)!important;border:1px solid var(--bd2)!important;color:var(--tx)!important;font-family:var(--fn)!important;border-radius:6px!important;padding:7px 10px!important}
+.search-row{display:flex;gap:10px;align-items:center}
+.search-row .select2-container{flex:1;min-width:0}
+.add-qty{width:56px;height:40px;flex-shrink:0;padding:0 6px;border:1px solid var(--bd2);background:var(--bg3);color:var(--tx);border-radius:var(--rs);font-family:var(--mo);font-size:15px;font-weight:600;text-align:center;-moz-appearance:textfield}
+.add-qty::-webkit-outer-spin-button,.add-qty::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.add-qty:focus{outline:none;border-color:var(--go);background:var(--bg4)}
 .price-type-row{display:flex;gap:8px;margin-top:10px}
 .price-btn{flex:1;padding:7px;border:1px solid var(--bd2);background:var(--bg3);color:var(--tx2);border-radius:var(--rs);cursor:pointer;font-family:var(--fn);font-size:12px;font-weight:500;transition:all .14s}
 .price-btn.on{background:var(--gd);border-color:var(--go);color:var(--go)}
 .price-btn:hover:not(.on){background:var(--bg4);color:var(--tx)}
-.add-btn{width:100%;margin-top:10px;padding:9px;background:var(--go);color:#09090b;border:none;border-radius:var(--rs);cursor:pointer;font-family:var(--fn);font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .14s}
-.add-btn:hover{background:var(--go2)}
-.add-btn:active{transform:scale(.98)}
-.add-btn svg{width:14px;height:14px}
 
 /* PRODUCT GRID */
 .product-area{flex:1;overflow-y:auto;padding:14px 22px}
@@ -374,26 +375,25 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:14px;l
 
   <!-- SEARCH -->
   <div class="search-area">
-    <select id="product-select" style="width:100%">
-      <option value="">Cari & tambah produk...</option>
-      @foreach($products as $p)
-      <option value="{{ $p->id }}"
-        data-pcs="{{ $p->harga_jual_pcs }}"
-        data-dus="{{ $p->harga_jual_dus }}"
-        data-nm-pcs="{{ isset($p->harga_nonmember_pcs) && $p->harga_nonmember_pcs ? $p->harga_nonmember_pcs : $p->harga_jual_pcs }}"
-        data-nm-dus="{{ isset($p->harga_nonmember_dus) && $p->harga_nonmember_dus ? $p->harga_nonmember_dus : $p->harga_jual_dus }}">
-        {{ $p->name }}
-      </option>
-      @endforeach
-    </select>
+    <div class="search-row">
+      <input type="number" id="add-qty" class="add-qty" value="1" min="1" step="1" inputmode="numeric" aria-label="Qty" title="Jumlah">
+      <select id="product-select" style="width:100%">
+        <option value="">Cari produk...</option>
+        @foreach($products as $p)
+        <option value="{{ $p->id }}"
+          data-pcs="{{ $p->harga_jual_pcs }}"
+          data-dus="{{ $p->harga_jual_dus }}"
+          data-nm-pcs="{{ isset($p->harga_nonmember_pcs) && $p->harga_nonmember_pcs ? $p->harga_nonmember_pcs : $p->harga_jual_pcs }}"
+          data-nm-dus="{{ isset($p->harga_nonmember_dus) && $p->harga_nonmember_dus ? $p->harga_nonmember_dus : $p->harga_jual_dus }}">
+          {{ $p->name }}
+        </option>
+        @endforeach
+      </select>
+    </div>
     <div class="price-type-row">
       <button class="price-btn on" id="btn-pcs" onclick="setPriceType('pcs')">Satuan (PCS)</button>
       <button class="price-btn" id="btn-dus" onclick="setPriceType('dus')">Per Dus</button>
     </div>
-    <button class="add-btn" onclick="addToCart()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
-      Tambah ke Keranjang
-    </button>
   </div>
 
   <!-- PRODUCT GRID -->
@@ -781,6 +781,9 @@ $(document).ready(function() {
     initCartResize();
     $('#product-select').select2({ placeholder:'Cari produk...', width:'100%', dropdownParent:$('.search-area') });
     $('#product-select').on('select2:select', () => addToCart());
+    document.getElementById('add-qty')?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); addToCart(); }
+    });
     loadCart();
     refreshOrdersBadge();
     setInterval(refreshOrdersBadge, 15000);
@@ -838,28 +841,36 @@ function getPrice(option) {
     }
 }
 
+function getAddQty() {
+    const n = parseInt(document.getElementById('add-qty')?.value, 10);
+    return Number.isFinite(n) && n >= 1 ? n : 1;
+}
+
 function addToCart() {
     const sel = document.getElementById('product-select');
     const id  = sel.value;
     if (!id) return;
     const opt   = sel.options[sel.selectedIndex];
     const price = getPrice(opt);
-    doAdd(id, price);
+    const qty   = getAddQty();
+    doAdd(id, price, qty);
     $('#product-select').val(null).trigger('change');
+    setTimeout(() => $('#product-select').select2('open'), 0);
 }
 
 function quickAdd(id, pricePcs, priceDus, nmPcs, nmDus) {
     const price = isMember
         ? (priceType==='pcs' ? pricePcs : priceDus)
         : (priceType==='pcs' ? nmPcs    : nmDus);
-    doAdd(id, price);
+    doAdd(id, price, getAddQty());
 }
 
-function doAdd(id, price) {
+function doAdd(id, price, qty) {
+    const amount = qty ?? getAddQty();
     fetch('/cart/add', {
         method:'POST',
         headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF,'Accept':'application/json'},
-        body: JSON.stringify({ product_id:id, price }),
+        body: JSON.stringify({ product_id:id, price, qty: amount }),
     }).then(r=>r.json()).then(d => {
         if (d.status==='success') { loadCart(); showToast('Produk ditambahkan','ok'); }
         else showToast(d.message||'Gagal','err');
@@ -867,7 +878,7 @@ function doAdd(id, price) {
 }
 
 function cartEntries(cart) {
-    return Object.entries(cart).sort((a, b) => (a[1].order ?? 0) - (b[1].order ?? 0));
+    return Object.entries(cart).sort((a, b) => (b[1].order ?? 0) - (a[1].order ?? 0));
 }
 
 // ── LOAD CART ──────────────────────────────────────────

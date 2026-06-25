@@ -42,7 +42,7 @@ Route::middleware(['auth'])->group(function () {
 
     // ── KASIR + ADMIN ──────────────────────────────────
     Route::get('/dashboard', function () {
-        $products  = Product::with('category')->latest()->get();
+        $products  = Product::with('category')->get();
 
         $hasDebts  = Schema::hasTable('debts');
         $customers = Customer::all()->map(function ($c) use ($hasDebts) {
