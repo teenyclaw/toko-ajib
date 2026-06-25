@@ -39,6 +39,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:14px;l
   transition:grid-template-columns .22s ease;
 }
 .app.cart-collapsed{--cart-w:var(--cart-tab-w)}
+.app.cart-resizing{transition:none}
 
 /* SIDEBAR — fixed overlay, tidak ikut grid */
 .sb{
@@ -137,6 +138,19 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:14px;l
   min-width:0;width:100%;max-width:var(--cart-w);
   position:relative;
 }
+.cart-resize-handle{
+  position:absolute;left:0;top:0;bottom:0;width:6px;
+  transform:translateX(-50%);cursor:col-resize;z-index:5;
+  touch-action:none;
+}
+.cart-resize-handle::after{
+  content:'';position:absolute;inset:0 1px;
+  border-radius:3px;transition:background .14s;
+}
+.cart-resize-handle:hover::after,.cart-resize-handle.active::after{
+  background:rgba(201,164,78,.45);
+}
+.app.cart-collapsed .cart-resize-handle,.app.layout-stack .cart-resize-handle{display:none}
 .cart-inner{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
 .app.cart-collapsed .cart-inner{display:none}
 .cart-tab{display:none;flex-direction:column;align-items:center;padding:14px 6px;gap:10px;height:100%;cursor:pointer;color:var(--tx2);background:var(--bg2);border:none;width:100%;font-family:var(--fn);transition:background .14s}
@@ -407,6 +421,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:14px;l
 
 <!-- CART PANEL -->
 <aside class="cart-panel" id="cart-panel">
+  <div class="cart-resize-handle" id="cart-resize-handle" title="Tarik untuk atur lebar keranjang" aria-hidden="true"></div>
   <button type="button" class="cart-tab" onclick="toggleCart(false)" title="Buka keranjang">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
     <span class="cart-tab-badge" id="cart-tab-badge">0</span>
@@ -623,6 +638,12 @@ let currentItem = {};
 let currentItemId = '';
 
 const LAYOUT_KEY = 'pos_layout_v3';
+const CART_W_MIN = 200;
+const CART_W_MAX = 480;
+
+function clampCartWidth(w) {
+    return Math.min(CART_W_MAX, Math.max(CART_W_MIN, Math.round(w)));
+}
 
 function getLayoutPrefs() {
     try {
@@ -665,6 +686,12 @@ function applyLayout() {
     app.classList.toggle('sb-open', !!prefs.sbOpen);
     app.classList.toggle('layout-stack', isStackLayout());
 
+    if (!cartCollapsed && !isStackLayout() && prefs.cartWidth) {
+        app.style.setProperty('--cart-w', clampCartWidth(prefs.cartWidth) + 'px');
+    } else {
+        app.style.removeProperty('--cart-w');
+    }
+
     const backdrop = g('sb-backdrop');
     if (backdrop) backdrop.classList.toggle('show', !!prefs.sbOpen);
 
@@ -704,6 +731,46 @@ window.addEventListener('resize', () => {
     layoutResizeTimer = setTimeout(applyLayout, 120);
 });
 
+function initCartResize() {
+    const handle = g('cart-resize-handle');
+    const app = g('app');
+    if (!handle || !app) return;
+
+    let dragging = false;
+
+    handle.addEventListener('mousedown', e => {
+        if (isStackLayout() || app.classList.contains('cart-collapsed')) return;
+        e.preventDefault();
+        dragging = true;
+        handle.classList.add('active');
+        app.classList.add('cart-resizing');
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+    });
+
+    document.addEventListener('mousemove', e => {
+        if (!dragging) return;
+        const w = clampCartWidth(window.innerWidth - e.clientX);
+        app.style.setProperty('--cart-w', w + 'px');
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('active');
+        app.classList.remove('cart-resizing');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        const raw = getComputedStyle(app).getPropertyValue('--cart-w').trim();
+        const w = parseInt(raw, 10);
+        if (w) {
+            const prefs = getLayoutPrefs();
+            prefs.cartWidth = w;
+            saveLayoutPrefs(prefs);
+        }
+    });
+}
+
 // ── CLOCK ──────────────────────────────────────────────
 setInterval(() => { g('clock').textContent = new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }, 1000);
 
@@ -711,6 +778,7 @@ setInterval(() => { g('clock').textContent = new Date().toLocaleTimeString('id-I
 $(document).ready(function() {
     migrateLayoutPrefs();
     applyLayout();
+    initCartResize();
     $('#product-select').select2({ placeholder:'Cari produk...', width:'100%', dropdownParent:$('.search-area') });
     $('#product-select').on('select2:select', () => addToCart());
     loadCart();
