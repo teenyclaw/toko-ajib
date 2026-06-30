@@ -22,6 +22,17 @@
 .product-card[hidden]{display:none!important}
 .search-empty{display:none;text-align:center;padding:32px 16px;color:var(--tx2)}
 .search-empty.show{display:block}
+.manual-box{
+  margin:0 0 14px;padding:12px;border-radius:var(--rs);
+  background:var(--bg3);border:1px dashed var(--bd2);
+}
+.manual-box-title{font-size:12px;color:var(--tx2);margin-bottom:8px}
+.manual-grid{display:grid;grid-template-columns:minmax(0,1fr) 74px auto;gap:8px;align-items:center}
+.manual-grid .note-input{grid-column:1/-1}
+@media (max-width:520px){
+  .manual-grid{grid-template-columns:minmax(0,1fr) 74px}
+  .manual-grid button{grid-column:1/-1}
+}
 </style>
 @endpush
 
@@ -36,6 +47,16 @@
   <input type="search" id="product-search" placeholder="Cari produk..." autocomplete="off" value="{{ $search ?? '' }}">
 </div>
 <div class="search-meta" id="search-meta"></div>
+<div class="manual-box">
+  <div class="manual-box-title">Produk belum ada di daftar? Tambah item manual</div>
+  <form method="POST" action="{{ route('order.cart.add-manual') }}" class="add-to-cart-manual-form manual-grid">
+    @csrf
+    <input type="text" name="name" class="note-input" placeholder="Nama produk manual" maxlength="255" required aria-label="Nama produk manual">
+    <input type="number" name="qty" value="1" min="1" max="9999" aria-label="Jumlah">
+    <button type="submit" class="btn btn-primary btn-sm">+ Keranjang</button>
+    <input type="text" name="note" class="note-input" placeholder="Catatan item (opsional)" maxlength="500" aria-label="Catatan item manual">
+  </form>
+</div>
 
 @if($products->isEmpty())
   <div class="empty">

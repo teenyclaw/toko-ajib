@@ -210,6 +210,37 @@ window.OrderCart = (function () {
     }
   }
 
+  async function addManualProduct(name, qty, note) {
+    try {
+      const res = await fetch(document.getElementById('cart-add-manual-url')?.value || '/order/cart/add-manual', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': CSRF,
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          name: name,
+          qty: qty,
+          note: note || null,
+          unit: 'pcs',
+        }),
+      });
+      const data = await parseJsonResponse(res);
+      if (!res.ok || data.status === 'error') {
+        showToast(data.message || 'Gagal menambahkan item manual');
+        return false;
+      }
+      renderItems(data);
+      showToast(data.message || 'Item manual ditambahkan');
+      if (isMobile()) open();
+      return true;
+    } catch (e) {
+      showToast('Gagal menambahkan item manual');
+      return false;
+    }
+  }
+
   async function updateItem(lineKey, payload) {
     if (!lineKey) {
       showToast('Item keranjang tidak valid');
@@ -281,16 +312,39 @@ window.OrderCart = (function () {
     });
   });
 
+  document.querySelectorAll('.add-to-cart-manual-form').forEach(form => {
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const name = form.querySelector('[name=name]')?.value?.trim() || '';
+      const qty = parseInt(form.querySelector('[name=qty]')?.value || '1', 10);
+      const note = form.querySelector('[name=note]')?.value?.trim() || '';
+      const btn = form.querySelector('button[type=submit]');
+      if (!name) {
+        showToast('Nama produk manual wajib diisi');
+        return;
+      }
+      if (btn) btn.disabled = true;
+      const ok = await addManualProduct(name, qty, note);
+      if (btn) btn.disabled = false;
+      if (ok) {
+        form.reset();
+        const qtyField = form.querySelector('[name=qty]');
+        if (qtyField) qtyField.value = '1';
+      }
+    });
+  });
+
   if (new URLSearchParams(location.search).get('cart') === 'open') {
     open();
   }
 
   bindActions();
 
-  return { open, close, toggle, refresh, addProduct };
+  return { open, close, toggle, refresh, addProduct, addManualProduct };
 })();
 </script>
 <input type="hidden" id="checkout-url" value="{{ route('order.checkout') }}">
 <input type="hidden" id="cart-data-url" value="{{ route('order.cart.data') }}">
 <input type="hidden" id="cart-add-url" value="{{ route('order.cart.add') }}">
+<input type="hidden" id="cart-add-manual-url" value="{{ route('order.cart.add-manual') }}">
 <input type="hidden" id="cart-update-url" value="{{ url('/order/cart') }}/">

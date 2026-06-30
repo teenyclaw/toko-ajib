@@ -61,6 +61,39 @@ class OrderCartController extends Controller
         return back()->with('success', $product->name . ' ditambahkan ke keranjang.');
     }
 
+    public function addManual(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'qty'  => 'integer|min:1|max:9999',
+            'unit' => ['nullable', Rule::in(OrderUnits::all())],
+            'note' => 'nullable|string|max:500',
+        ]);
+
+        try {
+            $this->orderService->addManualItemToCart(
+                $request->name,
+                (int) ($request->qty ?? 1),
+                $request->unit ?? 'pcs',
+                $request->note
+            );
+        } catch (\InvalidArgumentException $e) {
+            if ($request->expectsJson()) {
+                return response()->json(['status' => 'error', 'message' => $e->getMessage()], 422);
+            }
+
+            return back()->with('error', $e->getMessage());
+        }
+
+        $payload = array_merge(['status' => 'success', 'message' => 'Item manual ditambahkan'], $this->cartPayload());
+
+        if ($request->expectsJson()) {
+            return response()->json($payload);
+        }
+
+        return back()->with('success', 'Item manual ditambahkan ke keranjang.');
+    }
+
     public function update(Request $request, string $lineKey)
     {
         $request->validate([

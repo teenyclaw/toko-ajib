@@ -213,6 +213,45 @@ class OrderService
         return $cart;
     }
 
+    public function addManualItemToCart(string $name, int $qty = 1, string $unit = 'pcs', ?string $note = null): array
+    {
+        $name = trim($name);
+        if ($name === '') {
+            throw new \InvalidArgumentException('Nama produk manual wajib diisi.');
+        }
+
+        $qty = max(1, $qty);
+        $unit = OrderUnits::normalize($unit);
+        $note = $note !== null ? trim($note) : null;
+        if ($note === '') {
+            $note = null;
+        }
+
+        $cart = OrderSessionCart::get();
+        $id   = $this->manualLineKey($name, $unit);
+
+        if (isset($cart[$id])) {
+            $cart[$id]['qty'] += $qty;
+            if ($note !== null) {
+                $cart[$id]['note'] = $note;
+            }
+        } else {
+            $cart[$id] = [
+                'product_id' => null,
+                'name'       => $name,
+                'qty'        => $qty,
+                'unit'       => $unit,
+                'note'       => $note,
+                'order'      => CartOrder::next($cart),
+                'stock'      => 9999,
+            ];
+        }
+
+        OrderSessionCart::put($cart);
+
+        return $cart;
+    }
+
     public function updateCartItem(string $lineKey, int $qty, ?string $unit = null, ?string $note = null): array
     {
         $cart = OrderSessionCart::get();
@@ -222,13 +261,7 @@ class OrderService
         }
 
         $item    = $cart[$lineKey];
-        $product = Product::find($item['product_id']);
-        if (!$product) {
-            unset($cart[$lineKey]);
-            OrderSessionCart::put($cart);
-
-            return $cart;
-        }
+        $isManual = empty($item['product_id']);
 
         if ($qty <= 0) {
             unset($cart[$lineKey]);
@@ -237,8 +270,19 @@ class OrderService
             return $cart;
         }
 
-        if ($qty > $product->stock) {
-            throw new \InvalidArgumentException('Qty melebihi stok tersedia (' . $product->stock . ').');
+        $product = null;
+        if (!$isManual) {
+            $product = Product::find($item['product_id']);
+            if (!$product) {
+                unset($cart[$lineKey]);
+                OrderSessionCart::put($cart);
+
+                return $cart;
+            }
+
+            if ($qty > $product->stock) {
+                throw new \InvalidArgumentException('Qty melebihi stok tersedia (' . $product->stock . ').');
+            }
         }
 
         $newUnit = $unit !== null ? OrderUnits::normalize($unit) : ($item['unit'] ?? 'pcs');
@@ -249,7 +293,9 @@ class OrderService
 
         unset($cart[$lineKey]);
 
-        $newKey = OrderUnits::cartLineKey($product->id, $newUnit);
+        $newKey = $isManual
+            ? $this->manualLineKey($item['name'] ?? 'Item Manual', $newUnit)
+            : OrderUnits::cartLineKey($product->id, $newUnit);
         if (isset($cart[$newKey]) && $newKey !== $lineKey) {
             $cart[$newKey]['qty'] += $qty;
             if ($newNote !== null) {
@@ -257,13 +303,13 @@ class OrderService
             }
         } else {
             $cart[$newKey] = [
-                'product_id' => $product->id,
-                'name'       => $product->name,
+                'product_id' => $isManual ? null : $product->id,
+                'name'       => $isManual ? ($item['name'] ?? 'Item Manual') : $product->name,
                 'qty'        => $qty,
                 'unit'       => $newUnit,
                 'note'       => $newNote,
                 'order'      => $item['order'] ?? CartOrder::next($cart),
-                'stock'      => $product->stock,
+                'stock'      => $isManual ? 9999 : $product->stock,
             ];
         }
 
@@ -530,5 +576,11 @@ class OrderService
         }
 
         return $name;
+    }
+
+    private function manualLineKey(string $name, string $unit): string
+    {
+        $normalized = mb_strtolower(trim($name));
+        return 'manual_' . substr(md5($normalized), 0, 16) . '__' . OrderUnits::normalize($unit);
     }
 }
