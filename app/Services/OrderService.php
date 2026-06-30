@@ -387,13 +387,31 @@ class OrderService
         }
 
         $order->load('items.product', 'customer');
-        $cart = [];
-        $warnings = [];
+        $cart         = [];
+        $warnings     = [];
+        $manualCount  = 0;
 
         foreach ($order->items as $item) {
             $product = $item->product;
 
             if (!$product) {
+                if ($item->product_id === null) {
+                    $cartKey = 'custom_order_' . $item->id;
+                    $cart[$cartKey] = [
+                        'name'       => $item->product_name,
+                        'price'      => 0,
+                        'qty'        => $item->qty,
+                        'unit'       => $item->unit ?? 'pcs',
+                        'note'       => $item->note,
+                        'custom'     => true,
+                        'from_order' => true,
+                        'order'      => $item->sort_order,
+                    ];
+                    $manualCount++;
+
+                    continue;
+                }
+
                 $warnings[] = $item->product_name . ' (produk tidak ditemukan)';
                 continue;
             }
@@ -446,6 +464,7 @@ class OrderService
             'cart'         => $cart,
             'grandTotal'   => $grandTotal,
             'warnings'     => $warnings,
+            'manual_count' => $manualCount,
         ];
     }
 

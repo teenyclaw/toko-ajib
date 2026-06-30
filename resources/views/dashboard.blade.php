@@ -1411,6 +1411,9 @@ async function loadOrderToCart(orderId) {
         toggleCart(false);
 
         let msg = `Pesanan ${data.order_number} dimuat ke keranjang`;
+        if (data.manual_count > 0) {
+            msg += ` — ${data.manual_count} item manual (isi harga di kasir)`;
+        }
         if (data.warnings?.length) msg += ' (' + data.warnings.length + ' item dilewati)';
         showToast(msg, 'ok');
     } catch (e) {
