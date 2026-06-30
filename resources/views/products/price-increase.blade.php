@@ -101,13 +101,15 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
   .panel{border-right:none;border-bottom:1px solid var(--bd)}
 }
 </style>
+@include('partials.admin-shell-mobile-styles')
 </head>
 <body>
-<div class="app">
-@include('partials.sidebar', ['active' => 'products-price-increase'])
+@include('partials.admin-shell-mobile-body-start')
+@include('partials.sidebar', ['active' => 'products-price-increase', 'sidebarId' => 'sb'])
 
 <div class="main">
   <div class="topbar">
+    @include('partials.sb-toggle')
     <div>
       <div class="tb-ttl">Info Kenaikan Harga</div>
       <div class="tb-sub">Hitung harga jual dari modal DB + margin, cetak struk atau kirim WhatsApp</div>
@@ -519,5 +521,6 @@ document.getElementById('search-results').addEventListener('click', e => {
 setupTypeToggle('glob-dus-type', 'dus');
 setupTypeToggle('glob-pcs-type', 'pcs');
 </script>
+@include('partials.admin-shell-mobile-scripts')
 </body>
 </html>

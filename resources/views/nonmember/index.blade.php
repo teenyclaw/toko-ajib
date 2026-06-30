@@ -180,17 +180,19 @@ tbody td{padding:10px 14px;vertical-align:middle;font-size:12.5px;color:var(--tx
 .hl{animation:hl .7s ease}
 .sep{border:none;border-top:1px solid var(--bd);margin:14px 0}
 </style>
+@include('partials.admin-shell-mobile-styles')
 </head>
 <body>
-<div class="app">
+@include('partials.admin-shell-mobile-body-start')
 
-@include('partials.sidebar', ['active' => 'nonmember'])
+@include('partials.sidebar', ['active' => 'nonmember', 'sidebarId' => 'sb'])
 
 <!-- MAIN -->
 <main class="main">
 
 <!-- TOPBAR -->
 <div class="topbar">
+  @include('partials.sb-toggle')
   <div class="tb-ttl">Harga Khusus Non-Pelanggan</div>
   <span style="font-size:11.5px;color:var(--tx3);background:var(--pud);color:var(--pu);padding:4px 10px;border-radius:20px;border:1px solid rgba(167,139,250,.2)">
     {{ $products->count() }} produk terdaftar
@@ -611,5 +613,6 @@ function showToast(msg, type='ok') {
 // Init preview on load
 pvLive();
 </script>
+@include('partials.admin-shell-mobile-scripts')
 </body>
 </html>

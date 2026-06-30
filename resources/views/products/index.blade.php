@@ -243,17 +243,19 @@ tbody tr:hover .ra,.ra.vis{opacity:1}
 .empty{text-align:center;padding:64px 0}
 .empty svg{width:44px;height:44px;opacity:.15;margin:0 auto 12px;display:block}
 </style>
+@include('partials.admin-shell-mobile-styles')
 </head>
 <body>
-<div class="app">
+@include('partials.admin-shell-mobile-body-start')
 
-@include('partials.sidebar', ['active' => 'products'])
+@include('partials.sidebar', ['active' => 'products', 'sidebarId' => 'sb'])
 
 <!-- MAIN -->
 <main class="main">
 
 <!-- TOPBAR -->
 <div class="topbar">
+  @include('partials.sb-toggle')
   <div class="tb-ttl">Manajemen Produk</div>
   <button class="btn btn-ghost" onclick="openPanel('bulk')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -1053,5 +1055,6 @@ document.getElementById('panel-add').addEventListener('transitionend', e => {
   }
 });
 </script>
+@include('partials.admin-shell-mobile-scripts')
 </body>
 </html>

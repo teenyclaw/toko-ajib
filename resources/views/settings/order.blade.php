@@ -59,13 +59,15 @@ body{font-family:var(--fn);background:var(--bg);color:var(--tx);font-size:14px;l
 #qrcode{background:#fff;padding:10px;border-radius:8px}
 .qr-hint{font-size:11px;color:var(--tx3);text-align:center}
 </style>
+@include('partials.admin-shell-mobile-styles')
 </head>
 <body>
-<div class="app">
-@include('partials.sidebar', ['active' => 'settings-order'])
+@include('partials.admin-shell-mobile-body-start')
+@include('partials.sidebar', ['active' => 'settings-order', 'sidebarId' => 'sb'])
 
 <main class="main">
 <div class="topbar">
+  @include('partials.sb-toggle')
   <div class="tb-ttl">Pengaturan Pesanan Online</div>
   <a href="/dashboard" class="btn btn-ghost" style="padding:7px 12px">← Kasir</a>
 </div>
@@ -141,5 +143,6 @@ function copyCatalogUrl() {
   });
 }
 </script>
+@include('partials.admin-shell-mobile-scripts')
 </body>
 </html>

@@ -34,6 +34,9 @@ HTML;
 
 <aside class="sb"@if($sidebarId) id="{{ $sidebarId }}"@endif>
 <div class="sb-logo">
+  <button type="button" class="sb-close" onclick="if(window.AdminSidebar){AdminSidebar.close();}else if(typeof closeSidebar==='function'){closeSidebar();}" aria-label="Tutup menu" title="Tutup menu">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+  </button>
   <div class="logo">
     <div class="logo-ico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h7v7H3V3zm0 11h7v7H3v-7zm11-11h7v7h-7V3zm4 11h-1v3h-3v1h3v3h1v-3h3v-1h-3v-3z"/></svg></div>
     @if($useNavText)

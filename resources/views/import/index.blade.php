@@ -97,13 +97,15 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); font
 .example-label { font-size: 10.5px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 8px; font-weight: 500; }
 .example-code { font-family: var(--mono); font-size: 11px; color: var(--text2); line-height: 1.8; overflow-x: auto; white-space: pre; }
 </style>
+@include('partials.admin-shell-mobile-styles')
 </head>
 <body>
-<div class="app">
-    @include('partials.sidebar', ['active' => 'import'])
+@include('partials.admin-shell-mobile-body-start')
+    @include('partials.sidebar', ['active' => 'import', 'sidebarId' => 'sb'])
 
     <main class="main">
         <div class="topbar">
+            @include('partials.sb-toggle')
             <div class="topbar-title">Import & Export Data</div>
         </div>
 
@@ -245,5 +247,6 @@ dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dra
 dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
 dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); });
 </script>
+@include('partials.admin-shell-mobile-scripts')
 </body>
 </html>

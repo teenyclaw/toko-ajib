@@ -229,17 +229,19 @@ tbody tr:hover .ra{opacity:1}
 .bsm-ghost{background:var(--bg4);color:var(--tx2);border:1px solid var(--bd2)!important}
 .bsm-ghost:hover{background:var(--bg5);color:var(--tx)}
 </style>
+@include('partials.admin-shell-mobile-styles')
 </head>
 <body>
-<div class="app">
+@include('partials.admin-shell-mobile-body-start')
 
-@include('partials.sidebar', ['active' => 'transactions'])
+@include('partials.sidebar', ['active' => 'transactions', 'sidebarId' => 'sb'])
 
 <!-- MAIN -->
 <main class="main">
 
 <!-- TOPBAR -->
 <div class="topbar">
+  @include('partials.sb-toggle')
   <div class="tb-ttl">Riwayat Transaksi</div>
 </div>
 
@@ -709,5 +711,6 @@ document.addEventListener('keydown', e => {
   if (e.key==='Escape') ['detail','edit'].forEach(n=>closePanel(n));
 });
 </script>
+@include('partials.admin-shell-mobile-scripts')
 </body>
 </html>

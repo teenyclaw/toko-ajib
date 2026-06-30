@@ -81,13 +81,15 @@ tbody td{padding:12px;font-size:13px;color:var(--tx2);vertical-align:middle}
 .p-body{flex:1;overflow-y:auto;padding:18px}
 .p-foot{padding:14px 18px;border-top:1px solid var(--bd)}
 </style>
+@include('partials.admin-shell-mobile-styles')
 </head>
 <body>
-<div class="app">
-@include('partials.sidebar', ['active' => 'settings-users'])
+@include('partials.admin-shell-mobile-body-start')
+@include('partials.sidebar', ['active' => 'settings-users', 'sidebarId' => 'sb'])
 
 <main class="main">
 <div class="topbar">
+  @include('partials.sb-toggle')
   <div class="tb-ttl">Manajemen Pengguna</div>
   <button type="button" class="btn btn-primary" onclick="openAdd()">+ Tambah Akun</button>
 </div>
@@ -342,5 +344,6 @@ document.addEventListener('DOMContentLoaded', function () {
   @endif
 });
 </script>
+@include('partials.admin-shell-mobile-scripts')
 </body>
 </html>

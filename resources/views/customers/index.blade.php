@@ -192,13 +192,15 @@ tbody tr:hover .ra{opacity:1}
 @keyframes hl{0%,100%{background:transparent}40%{background:rgba(201,164,78,.06)}}
 .hl{animation:hl .7s ease}
 </style>
+@include('partials.admin-shell-mobile-styles')
 </head>
 <body>
-<div class="app">
-@include('partials.sidebar', ['active' => 'customers'])
+@include('partials.admin-shell-mobile-body-start')
+@include('partials.sidebar', ['active' => 'customers', 'sidebarId' => 'sb'])
 
 <main class="main">
 <div class="topbar">
+  @include('partials.sb-toggle')
   <div class="tb-ttl">Manajemen Pelanggan</div>
   <button class="btn btn-gold" onclick="openAddPanel()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Tambah Pelanggan
@@ -560,5 +562,6 @@ function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 document.addEventListener('keydown',e=>{if(e.key==='Escape')['add','edit','detail'].forEach(n=>closePanel(n));});
 g('panel-add').addEventListener('transitionend',e=>{if(e.propertyName==='transform'&&g('panel-add').classList.contains('on'))setTimeout(()=>g('a-name').focus(),50);});
 </script>
+@include('partials.admin-shell-mobile-scripts')
 </body>
 </html>

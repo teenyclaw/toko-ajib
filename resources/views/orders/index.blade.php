@@ -87,13 +87,15 @@ tbody td{padding:11px 14px;font-size:12.5px;color:var(--tx2);vertical-align:midd
 .item-tbl{width:100%;margin-top:12px}
 .item-tbl th,.item-tbl td{padding:8px 6px;font-size:12px;border-bottom:1px solid var(--bd);text-align:left}
 </style>
+@include('partials.admin-shell-mobile-styles')
 </head>
 <body>
-<div class="app">
-@include('partials.sidebar', ['active' => 'online-orders'])
+@include('partials.admin-shell-mobile-body-start')
+@include('partials.sidebar', ['active' => 'online-orders', 'sidebarId' => 'sb'])
 
 <main class="main">
 <div class="topbar">
+  @include('partials.sb-toggle')
   <div class="tb-ttl">Riwayat Pesanan Online</div>
   @if(auth()->user()->isAdmin())
   <a href="/settings/order" class="btn btn-ghost">Pengaturan</a>
@@ -221,5 +223,6 @@ async function cancelOrder(id) {
   location.reload();
 }
 </script>
+@include('partials.admin-shell-mobile-scripts')
 </body>
 </html>

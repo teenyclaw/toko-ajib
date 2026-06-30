@@ -93,13 +93,15 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
   .panel{border-right:none;border-bottom:1px solid var(--bd)}
 }
 </style>
+@include('partials.admin-shell-mobile-styles')
 </head>
 <body>
-<div class="app">
-@include('partials.sidebar', ['active' => 'products-bulk-modal'])
+@include('partials.admin-shell-mobile-body-start')
+@include('partials.sidebar', ['active' => 'products-bulk-modal', 'sidebarId' => 'sb'])
 
 <div class="main">
   <div class="topbar">
+    @include('partials.sb-toggle')
     <div>
       <div class="tb-ttl">Update Harga Modal Massal</div>
       <div class="tb-sub">Pilih produk, input harga modal baru, preview harga jual, simpan sekaligus</div>
@@ -409,5 +411,6 @@ document.getElementById('search-results').addEventListener('click', e => {
   addToWork(product);
 });
 </script>
+@include('partials.admin-shell-mobile-scripts')
 </body>
 </html>
