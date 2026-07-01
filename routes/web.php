@@ -105,6 +105,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::post('/products/{id}/update-details', [ProductController::class, 'updateDetails']);
     Route::post('/products/{id}/toggle-orderable', [ProductController::class, 'toggleOrderable']);
     Route::post('/products/update-margin-category',       [ProductController::class, 'updateMarginByCategory']);
+    Route::post('/products/update-margin-all',            [ProductController::class, 'updateMarginAll']);
     Route::get('/products/category-margins/{categoryId}', [ProductController::class, 'getCategoryMargins']);
     Route::post('/products/preview-price',       [ProductController::class, 'previewPrice']);
 

@@ -95,16 +95,43 @@ class ProductController extends Controller
             'margin_pcs_type' => 'required|in:percent,nominal',
         ]);
         $products = Product::where('category_id', $request->category_id)->get();
-        foreach ($products as $p) {
-            $p->update($this->calcPrices(array_merge($p->toArray(),
-                $request->only(['margin_dus','margin_dus_type','margin_pcs','margin_pcs_type'])
-            )));
-        }
+        $count    = $this->applyMarginBulk($products, $request);
+
         return response()->json([
             'status'  => 'success',
-            'count'   => $products->count(),
-            'message' => $products->count() . ' produk berhasil diperbarui',
+            'count'   => $count,
+            'message' => $count . ' produk berhasil diperbarui',
         ]);
+    }
+
+    public function updateMarginAll(Request $request)
+    {
+        $request->validate([
+            'margin_dus'      => 'required|numeric|min:0',
+            'margin_dus_type' => 'required|in:percent,nominal',
+            'margin_pcs'      => 'required|numeric|min:0',
+            'margin_pcs_type' => 'required|in:percent,nominal',
+        ]);
+        $count = $this->applyMarginBulk(Product::all(), $request);
+
+        return response()->json([
+            'status'  => 'success',
+            'count'   => $count,
+            'message' => $count . ' produk berhasil diperbarui',
+        ]);
+    }
+
+    private function applyMarginBulk($products, Request $request): int
+    {
+        $fields = $request->only(['margin_dus', 'margin_dus_type', 'margin_pcs', 'margin_pcs_type']);
+        $count  = 0;
+
+        foreach ($products as $p) {
+            $p->update($this->calcPrices(array_merge($p->toArray(), $fields)));
+            $count++;
+        }
+
+        return $count;
     }
 
     public function updateStock(Request $request, $id)

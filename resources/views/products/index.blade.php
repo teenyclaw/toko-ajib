@@ -259,7 +259,7 @@ tbody tr:hover .ra,.ra.vis{opacity:1}
   <div class="tb-ttl">Manajemen Produk</div>
   <button class="btn btn-ghost" onclick="openPanel('bulk')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-    Margin per Kategori
+    Margin Massal
   </button>
   <button class="btn btn-gold" onclick="openPanel('add')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
@@ -616,18 +616,25 @@ tbody tr:hover .ra,.ra.vis{opacity:1}
 </div>
 
 <!-- ═══════════════════════════════════════════════
-     PANEL — MARGIN MASSAL (per kategori)
+     PANEL — MARGIN MASSAL (per kategori / semua)
 ════════════════════════════════════════════════ -->
 <div class="ov" id="ov-bulk" onclick="closePanel('bulk')"></div>
 <div class="panel" id="panel-bulk">
   <div class="p-head">
     <div class="p-ico pi-gn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div>
-    <div><div class="p-ttl">Margin per Kategori</div><div class="p-sub">Update semua produk dalam 1 kategori</div></div>
+    <div><div class="p-ttl">Update Margin Massal</div><div class="p-sub" id="b-sub">Per kategori atau semua produk sekaligus</div></div>
     <button class="p-cls" onclick="closePanel('bulk')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
   </div>
   <div class="p-body">
     <div class="sc">
-      <div class="fg"><label class="fl">Pilih Kategori</label>
+      <div class="fg"><label class="fl">Terapkan Ke</label>
+        <div class="tt" style="width:100%">
+          <button type="button" class="tto on" id="b-scope-cat" onclick="setBulkScope('category')" style="flex:1">Per Kategori</button>
+          <button type="button" class="tto" id="b-scope-all" onclick="setBulkScope('all')" style="flex:1">Semua Produk</button>
+        </div>
+      </div>
+      <div class="fg" id="b-cat-wrap">
+        <label class="fl">Pilih Kategori</label>
         <select class="fi2" id="b-cat">
           <option value="">— Pilih Kategori —</option>
           @foreach($categories as $cat)
@@ -659,9 +666,9 @@ tbody tr:hover .ra,.ra.vis{opacity:1}
         </div>
       </div>
     </div>
-    <div style="background:var(--amd);border:1px solid rgba(245,158,11,.2);border-radius:var(--rs);padding:11px 13px;font-size:12px;color:var(--am);display:flex;gap:8px;align-items:flex-start">
+    <div id="b-warn" style="background:var(--amd);border:1px solid rgba(245,158,11,.2);border-radius:var(--rs);padding:11px 13px;font-size:12px;color:var(--am);display:flex;gap:8px;align-items:flex-start">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      Semua produk dalam kategori yang dipilih akan diperbarui. Aksi ini tidak bisa di-undo.
+      <span id="b-warn-txt">Semua produk dalam kategori yang dipilih akan diperbarui. Aksi ini tidak bisa di-undo.</span>
     </div>
   </div>
   <div class="p-foot">
@@ -695,6 +702,20 @@ const g   = id => document.getElementById(id);
 
 // Margin type state
 const T = { a:{d:'percent',p:'percent'}, m:{d:'percent',p:'percent'}, b:{d:'percent',p:'percent'} };
+let bulkScope = 'category';
+
+function setBulkScope(scope) {
+  bulkScope = scope;
+  g('b-scope-cat').classList.toggle('on', scope === 'category');
+  g('b-scope-all').classList.toggle('on', scope === 'all');
+  g('b-cat-wrap').style.display = scope === 'category' ? 'block' : 'none';
+  g('b-warn-txt').textContent = scope === 'all'
+    ? 'SEMUA produk di database akan diperbarui margin & harga jualnya. Aksi ini tidak bisa di-undo.'
+    : 'Semua produk dalam kategori yang dipilih akan diperbarui. Aksi ini tidak bisa di-undo.';
+  g('b-btn').innerHTML = scope === 'all'
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>Terapkan ke Semua Produk'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>Terapkan ke Kategori';
+}
 
 // ─── TYPE TOGGLE ───────────────────────────────────────
 function setTy(px, wh, ty) {
@@ -709,6 +730,7 @@ function setTy(px, wh, ty) {
 function openPanel(n) {
   g('ov-'+n).classList.add('on');
   g('panel-'+n).classList.add('on');
+  if (n === 'bulk') setBulkScope(bulkScope);
 }
 function closePanel(n) {
   g('ov-'+n).classList.remove('on');
@@ -814,20 +836,32 @@ async function submitMargin() {
 
 // ─── BULK MARGIN ───────────────────────────────────────
 async function submitBulk() {
-  const catId = g('b-cat').value;
-  if (!catId) { showToast('Pilih kategori terlebih dahulu', 'err'); return; }
+  const payload = {
+    margin_dus: g('b-md').value, margin_dus_type: T.b.d,
+    margin_pcs: g('b-mp').value, margin_pcs_type: T.b.p,
+  };
+
+  if (bulkScope === 'category') {
+    const catId = g('b-cat').value;
+    if (!catId) { showToast('Pilih kategori terlebih dahulu', 'err'); return; }
+    payload.category_id = catId;
+  } else {
+    if (!confirm('Terapkan margin baru ke SEMUA produk? Harga jual seluruh SKU akan dihitung ulang.')) return;
+  }
+
+  const btnLabel = bulkScope === 'all'
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>Terapkan ke Semua Produk'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>Terapkan ke Kategori';
+
   setBtn('b-btn', true, 'Memproses...');
   try {
-    const r = await callApi('POST', '/products/update-margin-category', {
-      category_id: catId,
-      margin_dus: g('b-md').value, margin_dus_type: T.b.d,
-      margin_pcs: g('b-mp').value, margin_pcs_type: T.b.p,
-    });
+    const url = bulkScope === 'all' ? '/products/update-margin-all' : '/products/update-margin-category';
+    const r = await callApi('POST', url, payload);
     if (r.status === 'success') {
       closePanel('bulk'); showToast(r.message, 'ok');
       setTimeout(() => location.reload(), 900);
     }
-  } finally { setBtn('b-btn', false, '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>Terapkan ke Semua'); }
+  } finally { setBtn('b-btn', false, btnLabel); }
 }
 
 // ─── INLINE: NAMA / KATEGORI / QTY ───────────────────
@@ -1054,6 +1088,7 @@ document.getElementById('panel-add').addEventListener('transitionend', e => {
     setTimeout(() => g('a-nm').focus(), 50);
   }
 });
+setBulkScope('category');
 </script>
 @include('partials.admin-shell-mobile-scripts')
 </body>
